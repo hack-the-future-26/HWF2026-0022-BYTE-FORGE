@@ -20,7 +20,8 @@ public class RuleEngineService {
     }
 
     /**
-     * Evaluates all registered title rules deterministically against the provided input context.
+     * Evaluates all registered title rules deterministically against the provided
+     * input context.
      *
      * @param input RuleEngineInput containing title and application context
      * @return List of RuleResultDto containing findings from each rule
@@ -46,8 +47,7 @@ public class RuleEngineService {
                         false,
                         "Rule execution error: " + e.getMessage(),
                         null,
-                        "Rule skipped due to execution error."
-                ));
+                        "Rule skipped due to execution error."));
             }
         }
 

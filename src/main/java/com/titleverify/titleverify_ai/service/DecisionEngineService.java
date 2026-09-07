@@ -9,12 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Decision Engine Service.
- * Evaluates risk score, exact match status, and rule findings to produce the recommended verification decision.
- * Outcomes: ACCEPT (Low Risk), REVIEW (Borderline Risk), HIGH RISK (High Risk).
- * Note: Development decision thresholds — not official PRGI criteria.
- */
 @Service
 public class DecisionEngineService {
 
@@ -29,8 +23,8 @@ public class DecisionEngineService {
     }
 
     public VerificationDecision determineDecision(boolean exactMatch,
-                                                  RiskScoreResultDto riskScoreResult,
-                                                  List<RuleResultDto> ruleResults) {
+            RiskScoreResultDto riskScoreResult,
+            List<RuleResultDto> ruleResults) {
         // Safety Override 1: Exact Title Match -> HIGH RISK
         if (exactMatch) {
             return VerificationDecision.HIGH_RISK;

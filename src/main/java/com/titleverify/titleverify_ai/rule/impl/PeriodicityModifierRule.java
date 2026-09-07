@@ -12,16 +12,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-/**
- * Rule: Periodicity Modifier Detection.
- * Detects when a proposed title contains an existing candidate title along with an added periodicity-style modifier.
- */
 @Component
 public class PeriodicityModifierRule implements TitleRule {
 
     private final List<String> periodicityModifiers;
 
-    public PeriodicityModifierRule(@Value("${titleverify.rules.periodicity-modifiers:daily,weekly,fortnightly,monthly,biweekly,bimonthly,quarterly,annual,yearly,evening,morning,express,gazette,bulletin}") String modifiersCsv) {
+    public PeriodicityModifierRule(
+            @Value("${titleverify.rules.periodicity-modifiers:daily,weekly,fortnightly,monthly,biweekly,bimonthly,quarterly,annual,yearly,evening,morning,express,gazette,bulletin}") String modifiersCsv) {
         this.periodicityModifiers = Arrays.stream(modifiersCsv.split(","))
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -53,10 +50,11 @@ public class PeriodicityModifierRule implements TitleRule {
             if (proposedNorm.contains(candNorm)) {
                 for (String modifier : periodicityModifiers) {
                     if (proposedNorm.endsWith(" " + modifier) ||
-                        proposedNorm.startsWith(modifier + " ") ||
-                        proposedNorm.contains(" " + modifier + " ")) {
+                            proposedNorm.startsWith(modifier + " ") ||
+                            proposedNorm.contains(" " + modifier + " ")) {
 
-                        String evidence = String.format("Proposed title '%s' contains candidate '%s' with periodicity modifier '%s'",
+                        String evidence = String.format(
+                                "Proposed title '%s' contains candidate '%s' with periodicity modifier '%s'",
                                 input.getProposedTitle(), candidate, modifier);
 
                         return new RuleResultDto(
@@ -66,8 +64,7 @@ public class PeriodicityModifierRule implements TitleRule {
                                 true,
                                 "Periodicity modifier addition detected against existing title '" + candidate + "'.",
                                 evidence,
-                                "Adding a periodicity modifier (e.g., Daily, Weekly) to an existing registered title may not create sufficient distinctiveness."
-                        );
+                                "Adding a periodicity modifier (e.g., Daily, Weekly) to an existing registered title may not create sufficient distinctiveness.");
                     }
                 }
             }
@@ -80,8 +77,7 @@ public class PeriodicityModifierRule implements TitleRule {
                 false,
                 "No periodicity modifier additions detected against candidate titles.",
                 null,
-                "Title passes periodicity modifier check."
-        );
+                "Title passes periodicity modifier check.");
     }
 
     @Override

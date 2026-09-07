@@ -10,11 +10,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-/**
- * Risk Scoring Engine Service.
- * Computes a normalized risk score (0.0 to 100.0) using configurable development weights.
- * Note: Development scoring configuration — not official PRGI criteria.
- */
 @Service
 public class RiskScoringService {
 
@@ -44,10 +39,10 @@ public class RiskScoringService {
     }
 
     public RiskScoreResultDto calculateRiskScore(boolean exactMatch,
-                                                 Double fuzzyScore,
-                                                 Double phoneticScore,
-                                                 Double semanticScore,
-                                                 List<RuleResultDto> ruleResults) {
+            Double fuzzyScore,
+            Double phoneticScore,
+            Double semanticScore,
+            List<RuleResultDto> ruleResults) {
         double rawScore;
 
         if (exactMatch) {

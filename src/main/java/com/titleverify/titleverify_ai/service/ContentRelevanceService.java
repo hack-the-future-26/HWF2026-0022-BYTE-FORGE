@@ -13,13 +13,8 @@ public class ContentRelevanceService {
             "from", "up", "about", "into", "through", "after", "is", "are", "was", "were", "be", "been",
             "being", "have", "has", "had", "do", "does", "did", "will", "would", "shall", "should",
             "may", "might", "must", "can", "could", "this", "that", "these", "those", "it", "its", "news",
-            "report", "special", "daily", "weekly", "today", "express", "times", "post"
-    );
+            "report", "special", "daily", "weekly", "today", "express", "times", "post");
 
-    /**
-     * Calculates content relevance between a generated headline and the complete source article text.
-     * Returns a percentage score from 0.0 to 100.0%.
-     */
     public double calculateRelevance(String headline, String articleContent) {
         if (headline == null || headline.isBlank() || articleContent == null || articleContent.isBlank()) {
             return 0.0;
@@ -55,13 +50,12 @@ public class ContentRelevanceService {
 
         double coverageRatio = (double) matchedWords / headlineTokens.size();
 
-        // 2. Substring & Phrase Matching (check for multi-word phrase occurrences in original article)
         String normHeadline = headline.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9 ]", " ").trim();
         String normArticle = articleContent.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9 ]", " ").trim();
 
         double phraseBonus = 0.0;
         if (normArticle.contains(normHeadline)) {
-            phraseBonus = 0.3; // Perfect match bonus
+            phraseBonus = 0.3;
         } else {
             // Check for 2-word phrase matches
             String[] words = normHeadline.split("\\s+");
@@ -76,7 +70,8 @@ public class ContentRelevanceService {
         // 3. Combine scores into 0.0 to 100.0%
         double baseScore = (coverageRatio * 70.0) + (Math.min(phraseBonus, 0.3) * 30.0);
 
-        // Cap minimum at 30.0 for generated headlines that represent extracted topics well, max at 98.0
+        // Cap minimum at 30.0 for generated headlines that represent extracted topics
+        // well, max at 98.0
         double finalRelevance = Math.min(98.0, Math.max(35.0, baseScore));
         return Math.round(finalRelevance * 10.0) / 10.0;
     }

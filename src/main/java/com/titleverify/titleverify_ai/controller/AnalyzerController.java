@@ -18,7 +18,7 @@ public class AnalyzerController {
         this.applicationService = applicationService;
     }
 
-    @GetMapping({"/", "/analyze"})
+    @GetMapping({ "/", "/analyze" })
     public String showAnalyzerPage() {
         return "analyzer";
     }

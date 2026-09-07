@@ -12,18 +12,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-/**
- * Rule: Prefix / Suffix Detection.
- * Detects non-distinctive additions (e.g. 'The', 'Shree', 'New', generic suffixes) around existing candidate titles.
- */
 @Component
 public class PrefixSuffixRule implements TitleRule {
 
     private final List<String> prefixes;
     private final List<String> suffixes;
 
-    public PrefixSuffixRule(@Value("${titleverify.rules.prefixes:the,a,an,shree,shri,new,latest,subh,real,super,prime,grand}") String prefixesCsv,
-                            @Value("${titleverify.rules.suffixes:news,times,post,today,now,herald,standard,live,media,chronicle,press,journal,samachar,khabar,patrikar}") String suffixesCsv) {
+    public PrefixSuffixRule(
+            @Value("${titleverify.rules.prefixes:the,a,an,shree,shri,new,latest,subh,real,super,prime,grand}") String prefixesCsv,
+            @Value("${titleverify.rules.suffixes:news,times,post,today,now,herald,standard,live,media,chronicle,press,journal,samachar,khabar,patrikar}") String suffixesCsv) {
         this.prefixes = Arrays.stream(prefixesCsv.split(","))
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -46,7 +43,8 @@ public class PrefixSuffixRule implements TitleRule {
         List<String> candidates = input.getCandidateTitles();
         if (candidates == null || candidates.isEmpty()) {
             return new RuleResultDto(getRuleId(), getRuleName(), RuleSeverity.INFO, false,
-                    "No candidate titles available to inspect prefix/suffix modifications.", null, "No action required.");
+                    "No candidate titles available to inspect prefix/suffix modifications.", null,
+                    "No action required.");
         }
 
         String proposedNorm = input.getNormalizedTitle().toLowerCase(Locale.ROOT);
@@ -61,7 +59,8 @@ public class PrefixSuffixRule implements TitleRule {
                 // Check Prefix
                 for (String prefix : prefixes) {
                     if (proposedNorm.startsWith(prefix + " ")) {
-                        String evidence = String.format("Matched Candidate: '%s', Detected Prefix: '%s'", candidate, prefix);
+                        String evidence = String.format("Matched Candidate: '%s', Detected Prefix: '%s'", candidate,
+                                prefix);
                         return new RuleResultDto(
                                 getRuleId(),
                                 getRuleName(),
@@ -69,15 +68,16 @@ public class PrefixSuffixRule implements TitleRule {
                                 true,
                                 "Generic prefix modification detected against candidate title '" + candidate + "'.",
                                 evidence,
-                                "Adding generic or non-distinctive prefixes (such as '" + prefix + "') to an existing registered title may lead to title rejection."
-                        );
+                                "Adding generic or non-distinctive prefixes (such as '" + prefix
+                                        + "') to an existing registered title may lead to title rejection.");
                     }
                 }
 
                 // Check Suffix
                 for (String suffix : suffixes) {
                     if (proposedNorm.endsWith(" " + suffix)) {
-                        String evidence = String.format("Matched Candidate: '%s', Detected Suffix: '%s'", candidate, suffix);
+                        String evidence = String.format("Matched Candidate: '%s', Detected Suffix: '%s'", candidate,
+                                suffix);
                         return new RuleResultDto(
                                 getRuleId(),
                                 getRuleName(),
@@ -85,8 +85,8 @@ public class PrefixSuffixRule implements TitleRule {
                                 true,
                                 "Generic suffix modification detected against candidate title '" + candidate + "'.",
                                 evidence,
-                                "Adding generic suffixes (such as '" + suffix + "') to an existing registered title may cause similarity conflicts."
-                        );
+                                "Adding generic suffixes (such as '" + suffix
+                                        + "') to an existing registered title may cause similarity conflicts.");
                     }
                 }
             }
@@ -99,8 +99,7 @@ public class PrefixSuffixRule implements TitleRule {
                 false,
                 "No non-distinctive prefix or suffix modifications detected against candidate titles.",
                 null,
-                "Title passes prefix/suffix inspection."
-        );
+                "Title passes prefix/suffix inspection.");
     }
 
     @Override

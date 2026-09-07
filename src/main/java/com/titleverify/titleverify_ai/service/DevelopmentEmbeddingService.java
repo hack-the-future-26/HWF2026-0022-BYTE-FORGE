@@ -53,9 +53,6 @@ public class DevelopmentEmbeddingService implements EmbeddingService {
         return true;
     }
 
-    /**
-     * Generates a deterministic 64-dimensional semantic feature vector based on word concept roots and n-grams.
-     */
     private float[] generateDeterministicEmbedding(String normalizedText) {
         float[] vector = new float[VECTOR_DIMENSION];
         String[] words = normalizedText.split("\\s+");

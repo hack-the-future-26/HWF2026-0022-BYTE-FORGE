@@ -9,7 +9,6 @@ import java.util.OptionalDouble;
 @Service
 public class SemanticSimilarityService {
 
-    // Development thresholds (experimental development values, not official PRGI thresholds)
     public static final double HIGH_SEMANTIC_THRESHOLD = 0.85;
     public static final double MODERATE_SEMANTIC_THRESHOLD = 0.65;
 
@@ -17,15 +16,11 @@ public class SemanticSimilarityService {
     private final CosineSimilarityCalculator cosineSimilarityCalculator;
 
     public SemanticSimilarityService(EmbeddingService embeddingService,
-                                     CosineSimilarityCalculator cosineSimilarityCalculator) {
+            CosineSimilarityCalculator cosineSimilarityCalculator) {
         this.embeddingService = embeddingService;
         this.cosineSimilarityCalculator = cosineSimilarityCalculator;
     }
 
-    /**
-     * Calculates semantic similarity between two titles using vector embeddings and Cosine Similarity.
-     * Returns OptionalDouble containing similarity score between 0.0 and 1.0, or OptionalDouble.empty() if unavailable.
-     */
     public OptionalDouble calculateSemanticSimilarity(String titleA, String titleB) {
         if (titleA == null || titleB == null) {
             return OptionalDouble.empty();
@@ -54,9 +49,6 @@ public class SemanticSimilarityService {
         return OptionalDouble.of(similarity);
     }
 
-    /**
-     * Categorizes semantic similarity score into experimental development threshold levels.
-     */
     public String classifySemanticLevel(double score) {
         if (score >= HIGH_SEMANTIC_THRESHOLD) {
             return "HIGH";

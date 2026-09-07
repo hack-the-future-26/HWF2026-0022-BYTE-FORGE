@@ -5,12 +5,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class CosineSimilarityCalculator {
 
-    /**
-     * Calculates the Cosine Similarity between two float vectors.
-     * Formula: cos(A, B) = (A . B) / (||A|| * ||B||)
-     * Returns a normalized score between 0.0 and 1.0.
-     * Handles null, zero vectors, and mismatched lengths safely.
-     */
     public double calculateCosineSimilarity(float[] vectorA, float[] vectorB) {
         if (vectorA == null || vectorB == null) {
             return 0.0;

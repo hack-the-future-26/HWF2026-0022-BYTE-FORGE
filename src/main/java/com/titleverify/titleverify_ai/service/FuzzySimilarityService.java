@@ -81,9 +81,6 @@ public class FuzzySimilarityService {
         return dp[s2.length()];
     }
 
-    /**
-     * Categorizes fuzzy similarity into development threshold levels.
-     */
     public String classifySimilarityLevel(double similarityScore) {
         if (similarityScore >= HIGH_SIMILARITY_THRESHOLD) {
             return "HIGH";

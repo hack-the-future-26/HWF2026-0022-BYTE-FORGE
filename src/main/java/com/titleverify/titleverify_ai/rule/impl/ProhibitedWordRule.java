@@ -12,16 +12,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Rule: Prohibited / Restricted Word Detection.
- * Note: Configurable development rule set for testing/demonstration purposes (not official PRGI rulebook).
- */
 @Component
 public class ProhibitedWordRule implements TitleRule {
 
     private final List<String> restrictedWords;
 
-    public ProhibitedWordRule(@Value("${titleverify.rules.prohibited-words:police,crime,corruption,cbi,cid,army}") String prohibitedWordsCsv) {
+    public ProhibitedWordRule(
+            @Value("${titleverify.rules.prohibited-words:police,crime,corruption,cbi,cid,army}") String prohibitedWordsCsv) {
         this.restrictedWords = Arrays.stream(prohibitedWordsCsv.split(","))
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -33,7 +30,8 @@ public class ProhibitedWordRule implements TitleRule {
     public RuleResultDto evaluate(RuleEngineInput input) {
         if (input == null || input.getNormalizedTitle() == null || input.getNormalizedTitle().isEmpty()) {
             return new RuleResultDto(getRuleId(), getRuleName(), RuleSeverity.INFO, false,
-                    "No valid title provided for prohibited word check.", null, "Ensure a non-empty title is submitted.");
+                    "No valid title provided for prohibited word check.", null,
+                    "Ensure a non-empty title is submitted.");
         }
 
         String normalized = input.getNormalizedTitle().toLowerCase();
@@ -41,7 +39,8 @@ public class ProhibitedWordRule implements TitleRule {
         List<String> matchedWords = new ArrayList<>();
 
         for (String word : restrictedWords) {
-            if (tokens.contains(word) || normalized.contains(" " + word + " ") || normalized.startsWith(word + " ") || normalized.endsWith(" " + word) || normalized.equals(word)) {
+            if (tokens.contains(word) || normalized.contains(" " + word + " ") || normalized.startsWith(word + " ")
+                    || normalized.endsWith(" " + word) || normalized.equals(word)) {
                 matchedWords.add(word);
             }
         }
@@ -53,10 +52,10 @@ public class ProhibitedWordRule implements TitleRule {
                     getRuleName(),
                     RuleSeverity.HIGH,
                     true,
-                    "Development Rule Warning: Proposed title contains restricted term(s): " + String.join(", ", matchedWords),
+                    "Development Rule Warning: Proposed title contains restricted term(s): "
+                            + String.join(", ", matchedWords),
                     evidenceStr,
-                    "Consider selecting a title that does not contain restricted government, law enforcement, or regulatory agency terms."
-            );
+                    "Consider selecting a title that does not contain restricted government, law enforcement, or regulatory agency terms.");
         }
 
         return new RuleResultDto(
@@ -66,8 +65,7 @@ public class ProhibitedWordRule implements TitleRule {
                 false,
                 "No prohibited or restricted words detected in title.",
                 "Checked against development restricted word list: " + restrictedWords,
-                "Title passes prohibited word inspection."
-        );
+                "Title passes prohibited word inspection.");
     }
 
     @Override

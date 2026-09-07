@@ -26,7 +26,8 @@ public class ApplicationApiController {
             return ResponseEntity.badRequest().body(new ApplicationResponseDto(null, "ERROR", e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApplicationResponseDto(null, "ERROR", "An unexpected error occurred while saving the application.", null));
+                    .body(new ApplicationResponseDto(null, "ERROR",
+                            "An unexpected error occurred while saving the application.", null));
         }
     }
 }
