@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - Application Analyzer</title>
+    <meta name="description" content="AI-powered pre-verification copilot for newspaper and magazine title clearance. Evaluate proposed titles before submission.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/analyzer.css}" href="/css/analyzer.css">
+</head>
+
+<body>
+
+    <!-- Deep Navy Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link active" aria-current="page">Analyze</a>
+                <span class="nav-link disabled" tabindex="-1" aria-disabled="true"
+                    title="Verification History (Coming Soon)">Verification History</span>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+        <!-- Hero Header -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                    </polygon>
+                </svg>
+                AI Pre-Verification Assistant
+            </div>
+            <h1 class="hero-heading">Analyze Before You Apply</h1>
+            <p class="hero-subtext">Evaluate proposed publication titles against existing registered titles and verification rules before submission.</p>
+        </section>
+
+        <!-- Application Analyzer Card -->
+        <div class="analyzer-card">
+            <form id="analyzerForm" novalidate aria-label="Title Verification Form">
+
+                <!-- Section 1: Publication Context -->
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Publication Context
+                    </h2>
+                    <p class="section-subtitle">Specify the domain, location, and periodicity details for title clearance verification.</p>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Publication Type -->
+                    <div class="form-group">
+                        <label for="publicationType" class="form-label">Publication Type <span
+                                class="required-star">*</span></label>
+                        <select id="publicationType" class="form-control" required aria-required="true" aria-describedby="publicationTypeError">
+                            <option value="" disabled selected>Select Publication Type</option>
+                            <option value="Newspaper">Newspaper</option>
+                            <option value="Magazine">Magazine</option>
+                            <option value="Journal">Journal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span class="error-message" id="publicationTypeError" role="alert">Please select a publication type</span>
+                    </div>
+
+                    <!-- Language -->
+                    <div class="form-group">
+                        <label for="language" class="form-label">Language <span class="required-star">*</span></label>
+                        <select id="language" class="form-control" required aria-required="true" aria-describedby="languageError">
+                            <option value="" disabled selected>Select Language</option>
+                            <option value="English">English</option>
+                            <option value="Kannada">Kannada</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Telugu">Telugu</option>
+                            <option value="Malayalam">Malayalam</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span class="error-message" id="languageError" role="alert">Please select a language</span>
+                    </div>
+
+                    <!-- State -->
+                    <div class="form-group">
+                        <label for="state" class="form-label">State / Union Territory <span
+                                class="required-star">*</span></label>
+                        <select id="state" class="form-control" required aria-required="true" aria-describedby="stateError">
+                            <option value="" disabled selected>Select State</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Delhi">Delhi (NCT)</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                            <option value="Other">Other State / UT</option>
+                        </select>
+                        <span class="error-message" id="stateError" role="alert">Please select a state</span>
+                    </div>
+
+                    <!-- District -->
+                    <div class="form-group">
+                        <label for="district" class="form-label">District <span class="required-star">*</span></label>
+                        <input type="text" id="district" class="form-control" placeholder="e.g. Bengaluru Urban"
+                            required aria-required="true" autocomplete="off" aria-describedby="districtError">
+                        <span class="error-message" id="districtError" role="alert">Please enter a district</span>
+                    </div>
+
+                    <!-- Periodicity -->
+                    <div class="form-group full-width">
+                        <label for="periodicity" class="form-label">Periodicity <span
+                                class="required-star">*</span></label>
+                        <select id="periodicity" class="form-control" required aria-required="true" aria-describedby="periodicityError">
+                            <option value="" disabled selected>Select Periodicity</option>
+                            <option value="Daily">Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Fortnightly">Fortnightly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span class="error-message" id="periodicityError" role="alert">Please select a periodicity</span>
+                    </div>
+                </div>
+
+                <div class="section-divider" role="separator"></div>
+
+                <!-- Section 2: Proposed Titles -->
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                            <line x1="9" y1="20" x2="15" y2="20"></line>
+                            <line x1="12" y1="4" x2="12" y2="20"></line>
+                        </svg>
+                        Proposed Titles
+                    </h2>
+                    <p class="section-subtitle">Enter proposed publication title options in order of preference (up to 5 titles).</p>
+                </div>
+
+                <div class="titles-list" id="titlesList">
+                    <!-- Title Option 1 (Default) -->
+                    <div class="title-row">
+                        <div class="title-index" aria-hidden="true">1</div>
+                        <div class="title-input-wrapper">
+                            <label for="title_1" class="sr-only">Proposed Title Option 1</label>
+                            <input type="text" class="form-control title-input" id="title_1"
+                                placeholder="e.g. Deccan Herald" autocomplete="off" required aria-required="true" aria-describedby="titleError_1" />
+                            <span class="error-message" id="titleError_1" role="alert">Please enter a proposed title</span>
+                        </div>
+
+                        <button type="button" class="btn-remove-title" title="Remove Title" style="display: none;"
+                            aria-label="Remove Title 1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="add-title-bar">
+                    <button type="button" class="btn-add-title" id="addTitleBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Another Title
+                    </button>
+                    <span class="title-limit-hint" id="titleLimitHint">1 of 5 title slots used</span>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span class="btn-text">ANALYZE TITLES</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </main>
+
+    <!-- Submission Popup Modal -->
+    <div class="modal-backdrop" id="confirmationModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalTitle"
+        aria-describedby="modalMessage">
+        <div class="modal-card">
+            <button type="button" class="modal-close-icon" id="modalCloseIconBtn" aria-label="Close modal dialog">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="modal-icon-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+
+            <h2 class="modal-heading" id="modalTitle">Application Submitted</h2>
+            <p class="modal-message" id="modalMessage">Your title options have been captured successfully. The verification engine will analyze them in the next step.</p>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-primary modal-btn-primary" id="modalContinueBtn">View Detailed Analysis &rarr;</button>
+                <button type="button" class="btn-secondary modal-btn-secondary" id="modalCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        TitleVerify AI &copy; 2026 &bull; Pre-Submission Approval Copilot
+    </footer>
+
+    <!-- JS -->
+    <script th:src="@{/js/analyzer.js}" src="/js/analyzer.js"></script>
+</body>
+
+</html>
