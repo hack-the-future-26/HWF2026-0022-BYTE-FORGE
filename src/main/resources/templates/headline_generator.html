@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - AI Headline Generator</title>
+    <meta name="description" content="Turn news articles into publication-ready headline options and screen each title against existing registered titles before submission.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/analyzer.css}" href="/css/analyzer.css">
+    <link rel="stylesheet" th:href="@{/css/detailed_analysis.css}" href="/css/detailed_analysis.css">
+    <link rel="stylesheet" th:href="@{/css/headline_generator.css}" href="/css/headline_generator.css">
+</head>
+
+<body>
+
+    <!-- Deep Navy Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link">Application Analyzer</a>
+                <a th:href="@{/headline-generator}" href="/headline-generator" class="nav-link active" aria-current="page">AI Headline Generator</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+        <!-- Hero Header -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                AI Publication Assistant
+            </div>
+            <h1 class="hero-heading">Generate. Verify. Choose.</h1>
+            <p class="hero-subtext">Turn your news content into publication-ready headline options and screen each title before submission.</p>
+        </section>
+
+        <!-- Content Input Card -->
+        <div class="analyzer-card" id="inputCard">
+            <form id="headlineForm" novalidate aria-label="Headline Generator Input Form">
+                
+                <!-- Section 1: News Article Content -->
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path>
+                            <path d="M18 14h-8"></path>
+                            <path d="M15 18h-5"></path>
+                            <path d="M10 6h8v4h-8z"></path>
+                        </svg>
+                        News Topic or Article Content
+                    </h2>
+                    <p class="section-subtitle">Paste your complete news topic or short news article (approx. 30–40 lines or up to 5000 characters).</p>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="articleContent" class="form-label">Content Body <span class="required-star">*</span></label>
+                    <textarea id="articleContent" class="form-control content-textarea" rows="10"
+                        placeholder="Enter news topic or article..." required aria-required="true"
+                        aria-describedby="contentCounter contentError" maxlength="5000"></textarea>
+                    
+                    <div class="input-meta-bar">
+                        <span class="error-message" id="contentError" role="alert"></span>
+                        <span class="char-counter" id="contentCounter">0 / 5000 characters</span>
+                    </div>
+                </div>
+
+                <div class="section-divider" role="separator" style="margin: 1.5rem 0;"></div>
+
+                <!-- Section 2: Compact Publication Context -->
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Publication Context
+                    </h2>
+                    <p class="section-subtitle">Specify publication details to pass complete context to the title verification engine.</p>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Publication Type -->
+                    <div class="form-group">
+                        <label for="publicationType" class="form-label">Publication Type</label>
+                        <select id="publicationType" class="form-control">
+                            <option value="Newspaper" selected>Newspaper</option>
+                            <option value="Magazine">Magazine</option>
+                            <option value="Journal">Journal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Language -->
+                    <div class="form-group">
+                        <label for="language" class="form-label">Output Language</label>
+                        <select id="language" class="form-control">
+                            <th:block th:if="${supportedLanguages != null}">
+                                <option th:each="lang : ${supportedLanguages}"
+                                        th:value="${lang.englishName}"
+                                        th:text="${lang.displayName}"
+                                        th:selected="${lang.code == 'en'}"></option>
+                            </th:block>
+                            <th:block th:unless="${supportedLanguages != null}">
+                                <option value="English" selected>English</option>
+                                <option value="Kannada">ಕನ್ನಡ (Kannada)</option>
+                                <option value="Hindi">हिन्दी (Hindi)</option>
+                                <option value="Tamil">தமிழ் (Tamil)</option>
+                                <option value="Telugu">తెలుగు (Telugu)</option>
+                                <option value="Malayalam">മലയാളം (Malayalam)</option>
+                                <option value="Marathi">मराठी (Marathi)</option>
+                                <option value="Bengali">বাংলা (Bengali)</option>
+                                <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+                                <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+                                <option value="Urdu">اردو (Urdu)</option>
+                                <option value="Odia">ଓଡ଼ିଆ (Odia)</option>
+                                <option value="Assamese">অসমীয়া (Assamese)</option>
+                                <option value="Arabic">العربية (Arabic)</option>
+                                <option value="French">Français (French)</option>
+                                <option value="German">Deutsch (German)</option>
+                                <option value="Spanish">Español (Spanish)</option>
+                                <option value="Portuguese">Português (Portuguese)</option>
+                                <option value="Italian">Italiano (Italian)</option>
+                                <option value="Russian">Русский (Russian)</option>
+                                <option value="Japanese">日本語 (Japanese)</option>
+                                <option value="Korean">한국어 (Korean)</option>
+                                <option value="Chinese">中文 (Chinese)</option>
+                            </th:block>
+                        </select>
+                    </div>
+
+                    <!-- State -->
+                    <div class="form-group">
+                        <label for="state" class="form-label">State / UT</label>
+                        <select id="state" class="form-control">
+                            <option value="Karnataka" selected>Karnataka</option>
+                            <option value="Delhi">Delhi (NCT)</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="West Bengal">West Bengal</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="Other">Other State / UT</option>
+                        </select>
+                    </div>
+
+                    <!-- District -->
+                    <div class="form-group">
+                        <label for="district" class="form-label">District</label>
+                        <input type="text" id="district" class="form-control" value="Bengaluru Urban" placeholder="e.g. Mysuru or Bengaluru Urban" autocomplete="off">
+                    </div>
+
+                    <!-- Periodicity -->
+                    <div class="form-group full-width">
+                        <label for="periodicity" class="form-label">Periodicity</label>
+                        <select id="periodicity" class="form-control">
+                            <option value="Daily" selected>Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Fortnightly">Fortnightly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn-primary" id="generateBtn">
+                        <span class="spinner" id="btnSpinner" aria-hidden="true" style="display:none;"></span>
+                        <span class="btn-text" id="btnText">GENERATE &amp; VERIFY</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Progress Steps Container -->
+        <div class="analyzer-card progress-card" id="progressCard" style="display: none;">
+            <h3 class="progress-title">AI Processing Workflow</h3>
+            <div class="progress-steps">
+                <div class="step-item" id="step1">
+                    <div class="step-icon">1</div>
+                    <div class="step-text">Reading and analyzing your content...</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" id="step2">
+                    <div class="step-icon">2</div>
+                    <div class="step-text">Generating 5 headline options...</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" id="step3">
+                    <div class="step-icon">3</div>
+                    <div class="step-text">Verifying generated headlines...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Notification Banner -->
+        <div class="error-banner" id="errorBanner" style="display: none;" role="alert">
+            <div class="error-icon">✕</div>
+            <div class="error-body">
+                <h4 class="error-title" id="errorTitle">Processing Error</h4>
+                <p class="error-message-text" id="errorMessageText">An error occurred while generating headlines.</p>
+            </div>
+        </div>
+
+        <!-- Results Wrapper -->
+        <div id="resultsWrapper" style="display: none;">
+
+            <!-- RECOMMENDED HEADLINE SECTION (Visually Highlighted) -->
+            <section class="recommended-headline-card" id="recommendedCard" aria-label="Recommended Headline">
+                <div class="rec-header-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    Recommended Headline
+                </div>
+
+                <h2 class="rec-headline-title" id="recHeadlineText">Headline Text</h2>
+
+                <div class="rec-metrics-grid">
+                    <div class="rec-metric-box">
+                        <div class="rec-metric-label">Content Relevance</div>
+                        <div class="rec-metric-val val-relevance" id="recContentRelevance">85.0%</div>
+                        <div class="rec-metric-sub">Alignment with supplied article</div>
+                    </div>
+                    <div class="rec-metric-box">
+                        <div class="rec-metric-label">Semantic Match</div>
+                        <div class="rec-metric-val" id="recSemanticMatch">42.0%</div>
+                        <div class="rec-metric-sub">Similarity to registered titles</div>
+                    </div>
+                    <div class="rec-metric-box">
+                        <div class="rec-metric-label">Risk Level &amp; Decision</div>
+                        <div class="rec-metric-val">
+                            <span class="badge-decision" id="recDecisionBadge">ACCEPT</span>
+                        </div>
+                        <div class="rec-metric-sub">Risk Score: <span id="recRiskScore">10.0</span> / 100</div>
+                    </div>
+                </div>
+
+                <div class="rec-why-box">
+                    <div class="rec-why-title">Why Recommended:</div>
+                    <p class="rec-why-text" id="recWhyText">Explanation text...</p>
+                </div>
+
+                <div class="disclaimer-note rec-disclaimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Pre-screening recommendation only. Final publication-title approval must follow the official registration process.
+                </div>
+            </section>
+
+            <!-- 5 VERIFIED HEADLINES LIST -->
+            <section class="results-list-section">
+                <div class="section-header flex-header">
+                    <div>
+                        <h2 class="section-title">All 5 Generated &amp; Verified Headline Options</h2>
+                        <p class="section-subtitle">Evaluated on Content Relevance and Title Clearance Risk.</p>
+                        <div style="margin-top: 0.4rem;">
+                            <span id="generatedLangTag" class="hero-badge" style="display:inline-block; font-size:0.8rem; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">Generated in: English</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="headline-cards-grid" id="headlineCardsGrid">
+                    <!-- Dynamic headline cards inserted by JS -->
+                </div>
+
+                <div class="re-generate-bar">
+                    <button type="button" class="btn-secondary" id="generateAgainBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                        Generate Again
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        TitleVerify AI &copy; 2026 &bull; Pre-Submission Approval Copilot
+    </footer>
+
+    <!-- JS -->
+    <script th:src="@{/js/headline_generator.js}" src="/js/headline_generator.js"></script>
+</body>
+
+</html>
