@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - Detailed Analysis</title>
+    <meta name="description" content="Detailed clearance verification report for proposed publication titles. Evaluate confidence, risk scores, similarity signals, and rule findings.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/analyzer.css}" href="/css/analyzer.css">
+    <link rel="stylesheet" th:href="@{/css/detailed_analysis.css}" href="/css/detailed_analysis.css">
+</head>
+
+<body>
+
+    <!-- Deep Navy Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="btn-back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    &larr; Back to Analysis
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Wrapper -->
+    <main class="main-wrapper">
+
+        <!-- Page Header -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                Detailed Verification Report
+            </div>
+            <h1 class="hero-heading">Title Clearance & Decision Analysis</h1>
+            <p class="hero-subtext" th:if="${analysisDetails != null}">
+                Application #<span th:text="${analysisDetails.applicationId}">1</span> &bull; 
+                <span th:text="${analysisDetails.publicationType}">Newspaper</span> in 
+                <span th:text="${analysisDetails.language}">English</span> 
+                (<span th:text="${analysisDetails.state}">Delhi</span>, <span th:text="${analysisDetails.district}">Central</span>) &bull; 
+                <span th:text="${analysisDetails.periodicity}">Daily</span>
+            </p>
+        </section>
+
+        <!-- Batch Summary Bar -->
+        <div class="batch-summary-card" th:if="${analysisDetails != null}">
+            <div class="summary-total">
+                <span class="total-badge" th:text="${analysisDetails.totalCount} + ' TITLE(S) ANALYZED'">1 TITLE(S) ANALYZED</span>
+            </div>
+            <div class="summary-counts">
+                <span class="count-chip chip-accept">
+                    <span class="dot dot-accept"></span>
+                    <span th:text="${analysisDetails.lowRiskCount} + ' ACCEPT (Low Risk)'">1 ACCEPT (Low Risk)</span>
+                </span>
+                <span class="count-chip chip-review">
+                    <span class="dot dot-review"></span>
+                    <span th:text="${analysisDetails.reviewCount} + ' REVIEW'">0 REVIEW</span>
+                </span>
+                <span class="count-chip chip-high-risk">
+                    <span class="dot dot-high-risk"></span>
+                    <span th:text="${analysisDetails.highRiskCount} + ' HIGH RISK'">0 HIGH RISK</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Title Selector Cards / Tabs -->
+        <div class="title-selector-container" th:if="${analysisDetails != null and analysisDetails.verificationResults != null}">
+            <h2 class="title-selector-label">Select Proposed Title Option:</h2>
+            <div class="title-cards-grid" role="tablist" aria-label="Proposed Titles List">
+                <div th:each="result, iterStat : ${analysisDetails.verificationResults}"
+                     class="title-card"
+                     th:classappend="${iterStat.index == 0} ? 'active' : ''"
+                     th:data-target="'detail-panel-' + ${iterStat.index}"
+                     role="tab"
+                     th:id="'title-tab-' + ${iterStat.index}"
+                     th:aria-selected="${iterStat.index == 0} ? 'true' : 'false'"
+                     th:aria-controls="'detail-panel-' + ${iterStat.index}"
+                     tabindex="0"
+                     onclick="switchTitleTab(this)"
+                     onkeydown="handleTabKeydown(event, this)">
+                    <div class="card-top-row">
+                        <span class="card-index" th:text="'#' + ${iterStat.index + 1}">#1</span>
+                        <span class="badge-decision"
+                              th:classappend="${result.finalDecision == 'ACCEPT'} ? 'accept' : (${result.finalDecision == 'REVIEW'} ? 'review' : 'high-risk')">
+                            <span class="status-symbol" th:text="${result.finalDecision == 'ACCEPT'} ? '🟢' : (${result.finalDecision == 'REVIEW'} ? '🟡' : '🔴')">🟢</span>
+                            <span th:text="${result.finalDecision}">ACCEPT</span>
+                        </span>
+                    </div>
+                    <div class="card-title-text" th:text="${result.proposedTitle}">Proposed Title Name</div>
+                    <div class="card-metrics-sub">
+                        <span>Confidence: <strong th:text="${#numbers.formatDecimal(result.approvalConfidence, 1, 1)} + '%'">90%</strong></span>
+                        <span>Score: <strong th:text="${#numbers.formatDecimal(result.riskScore, 1, 1)}">10.0</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Results Panels -->
+        <div class="detailed-panels-wrapper" th:if="${analysisDetails != null and analysisDetails.verificationResults != null}">
+            <div th:each="result, iterStat : ${analysisDetails.verificationResults}"
+                 class="detail-panel"
+                 th:id="'detail-panel-' + ${iterStat.index}"
+                 role="tabpanel"
+                 th:aria-labelledby="'title-tab-' + ${iterStat.index}"
+                 th:style="${iterStat.index == 0} ? 'display: flex;' : 'display: none;'">
+
+                <!-- Panel Section 1: Main Status & Top Metrics (Dominant Decision Anchor) -->
+                <div class="analyzer-card result-main-card">
+                    <div class="result-status-header">
+                        <div class="decision-hero-badge"
+                             th:classappend="${result.finalDecision == 'ACCEPT'} ? 'accept' : (${result.finalDecision == 'REVIEW'} ? 'review' : 'high-risk')">
+                            <span class="decision-icon" th:if="${result.finalDecision == 'ACCEPT'}">✓</span>
+                            <span class="decision-icon" th:if="${result.finalDecision == 'REVIEW'}">⚠</span>
+                            <span class="decision-icon" th:if="${result.finalDecision == 'HIGH RISK' or result.finalDecision == 'HIGH_RISK'}">✕</span>
+                            <span th:text="${result.finalDecision}">ACCEPT</span>
+                        </div>
+                        <div class="status-meta">
+                            <h2 class="proposed-title-heading" th:text="${result.proposedTitle}">Proposed Title</h2>
+                            <div class="decision-sub-label">
+                                Stage: <strong th:text="${result.decisionStage}">CANDIDATE_SIMILARITY_ANALYSIS</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-metrics-grid">
+                        <div class="metric-box">
+                            <div class="metric-label">Estimated Approval Confidence</div>
+                            <div class="metric-value value-confidence" th:text="${#numbers.formatDecimal(result.approvalConfidence, 1, 1)} + '%'">90.0%</div>
+                            <div class="metric-hint">Higher confidence indicates lower risk of pre-verification conflict</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Overall Risk Score</div>
+                            <div class="metric-value" th:text="${#numbers.formatDecimal(result.riskScore, 1, 1)} + ' / 100'">10.0 / 100</div>
+                            <div class="metric-hint">
+                                Risk Level: <span class="risk-level-tag" th:text="${result.riskLevel}">LOW RISK</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="disclaimer-note">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        Prototype estimate based on configured verification signals; not an official PRGI approval probability.
+                    </div>
+                </div>
+
+                <!-- Panel Section 2: Multi-Signal Risk Breakdown -->
+                <div class="analyzer-card">
+                    <h3 class="card-section-heading">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        Risk Breakdown & Similarity Signals
+                    </h3>
+                    <div class="breakdown-grid">
+                        <!-- Fuzzy Similarity -->
+                        <div class="breakdown-item">
+                            <div class="breakdown-header">
+                                <span class="breakdown-title">Fuzzy Similarity (Levenshtein)</span>
+                                <span class="breakdown-score" th:text="${#numbers.formatDecimal(result.highestFuzzySimilarity * 100, 1, 1)} + '%'">45%</span>
+                            </div>
+                            <div class="progress-bar-bg" role="progressbar" th:aria-valuenow="${#numbers.formatDecimal(result.highestFuzzySimilarity * 100, 1, 0)}" aria-valuemin="0" aria-valuemax="100" th:aria-label="'Fuzzy Similarity ' + ${#numbers.formatDecimal(result.highestFuzzySimilarity * 100, 1, 0)} + '%'">
+                                <div class="progress-bar-fill fuzzy-fill" th:style="'width: ' + ${result.highestFuzzySimilarity * 100} + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Phonetic Similarity -->
+                        <div class="breakdown-item">
+                            <div class="breakdown-header">
+                                <span class="breakdown-title">Phonetic Similarity (Metaphone)</span>
+                                <span class="breakdown-score" th:text="${#numbers.formatDecimal(result.highestPhoneticSimilarity * 100, 1, 1)} + '%'">50%</span>
+                            </div>
+                            <div class="progress-bar-bg" role="progressbar" th:aria-valuenow="${#numbers.formatDecimal(result.highestPhoneticSimilarity * 100, 1, 0)}" aria-valuemin="0" aria-valuemax="100" th:aria-label="'Phonetic Similarity ' + ${#numbers.formatDecimal(result.highestPhoneticSimilarity * 100, 1, 0)} + '%'">
+                                <div class="progress-bar-fill phonetic-fill" th:style="'width: ' + ${result.highestPhoneticSimilarity * 100} + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Semantic Similarity -->
+                        <div class="breakdown-item">
+                            <div class="breakdown-header">
+                                <span class="breakdown-title">Semantic Vector Similarity (Gemini AI)</span>
+                                <span class="breakdown-score" th:if="${result.highestSemanticSimilarity != null}" th:text="${#numbers.formatDecimal(result.highestSemanticSimilarity * 100, 1, 1)} + '%'">78%</span>
+                                <span class="breakdown-score unavailable" th:if="${result.highestSemanticSimilarity == null}">UNAVAILABLE</span>
+                            </div>
+                            <div class="progress-bar-bg" role="progressbar" th:aria-valuenow="${result.highestSemanticSimilarity != null ? #numbers.formatDecimal(result.highestSemanticSimilarity * 100, 1, 0) : 0}" aria-valuemin="0" aria-valuemax="100" th:aria-label="'Semantic Vector Similarity ' + ${result.highestSemanticSimilarity != null ? #numbers.formatDecimal(result.highestSemanticSimilarity * 100, 1, 0) + '%' : 'Unavailable'}">
+                                <div class="progress-bar-fill semantic-fill" th:if="${result.highestSemanticSimilarity != null}" th:style="'width: ' + ${result.highestSemanticSimilarity * 100} + '%'"></div>
+                                <div class="progress-bar-fill unavailable-fill" th:if="${result.highestSemanticSimilarity == null}" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Section 3: Closest Match -->
+                <div class="analyzer-card">
+                    <h3 class="card-section-heading">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        Closest Existing Registered Title
+                    </h3>
+                    <div class="closest-match-content">
+                        <div class="closest-match-name" th:text="${result.closestMatch != null ? result.closestMatch : 'No significant existing title match found.'}">
+                            Deccan Herald
+                        </div>
+                        <div class="candidate-matches-list" th:if="${result.candidateMatches != null and not #lists.isEmpty(result.candidateMatches)}">
+                            <div class="candidate-header-text">Top Candidate Matches Inspected:</div>
+                            <div class="candidate-row" th:each="cand : ${result.candidateMatches}">
+                                <div class="cand-title" th:text="${cand.candidateTitle}">Registered Title Name</div>
+                                <div class="cand-pills">
+                                    <span class="pill">Fuzzy: <strong th:text="${#numbers.formatDecimal(cand.similarityScore * 100, 1, 0)} + '%'">50%</strong></span>
+                                    <span class="pill">Phonetic: <strong th:text="${#numbers.formatDecimal(cand.phoneticSimilarityScore * 100, 1, 0)} + '%'">50%</strong></span>
+                                    <span class="pill" th:if="${cand.semanticSimilarityScore != null}">Semantic: <strong th:text="${#numbers.formatDecimal(cand.semanticSimilarityScore * 100, 1, 0)} + '%'">80%</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Section 4: Rule Findings -->
+                <div class="analyzer-card">
+                    <div class="card-section-header-flex">
+                        <h3 class="card-section-heading">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Rule Findings & Policy Checks
+                        </h3>
+                        <span class="dev-rule-tag">Development rule check</span>
+                    </div>
+
+                    <div class="rules-list" th:if="${result.ruleResults != null and not #lists.isEmpty(result.ruleResults)}">
+                        <div th:each="rule : ${result.ruleResults}" class="rule-card" th:classappend="${rule.triggered} ? 'rule-triggered' : 'rule-passed'">
+                            <div class="rule-top">
+                                <span class="severity-badge"
+                                      th:classappend="${rule.severity == 'HIGH'} ? 'sev-high' : (${rule.severity == 'WARNING'} ? 'sev-warning' : 'sev-info')">
+                                    <span th:if="${rule.severity == 'HIGH'}">🔴 HIGH</span>
+                                    <span th:if="${rule.severity == 'WARNING'}">🟡 WARNING</span>
+                                    <span th:if="${rule.severity == 'INFO'}">🔵 INFO</span>
+                                </span>
+                                <span class="rule-name" th:text="${rule.ruleName}">Prohibited Word Rule</span>
+                                <span class="rule-status-tag" th:text="${rule.triggered} ? 'TRIGGERED' : 'PASSED'">PASSED</span>
+                            </div>
+                            <div class="rule-message" th:text="${rule.message}">Message details</div>
+                            <div class="rule-evidence" th:if="${rule.evidence != null and !#strings.isEmpty(rule.evidence)}">
+                                <strong>Evidence:</strong> <span th:text="${rule.evidence}">Matched word</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="empty-rules-msg" th:if="${result.ruleResults == null or #lists.isEmpty(result.ruleResults)}">
+                        No rule findings recorded.
+                    </div>
+                </div>
+
+                <!-- Panel Section 5: Why This Result? -->
+                <div class="analyzer-card">
+                    <h3 class="card-section-heading">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Why this result?
+                    </h3>
+                    <ul class="reasons-list" th:if="${result.reasons != null and not #lists.isEmpty(result.reasons)}">
+                        <li th:each="reason : ${result.reasons}" th:text="${reason}">Exact match found with registered title.</li>
+                    </ul>
+                </div>
+
+                <!-- Panel Section 6: What Should I Do Next? -->
+                <div class="analyzer-card recommendation-card">
+                    <h3 class="card-section-heading heading-recommendation">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        What should I do next?
+                    </h3>
+                    <p class="recommendation-text" th:text="${result.recommendation}">
+                        Title demonstrates low verification risk under automated pre-screening criteria.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        TitleVerify AI &copy; 2026 &bull; Pre-Submission Approval Copilot
+    </footer>
+
+    <!-- JS -->
+    <script th:src="@{/js/detailed_analysis.js}" src="/js/detailed_analysis.js"></script>
+</body>
+
+</html>
