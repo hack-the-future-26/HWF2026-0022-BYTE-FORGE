@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TitleVerify AI - Application Analyzer</title>
-    <meta name="description" content="AI-powered pre-verification copilot for newspaper and magazine title clearance. Evaluate proposed titles before submission.">
+    <meta name="description"
+        content="AI-powered pre-verification copilot for newspaper and magazine title clearance. Evaluate proposed titles before submission.">
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,9 +36,10 @@
                 </div>
             </div>
             <nav class="header-nav" aria-label="Main Navigation">
-                <a th:href="@{/analyze}" href="/analyze" class="nav-link active" aria-current="page">Analyze</a>
-                <span class="nav-link disabled" tabindex="-1" aria-disabled="true"
-                    title="Verification History (Coming Soon)">Verification History</span>
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link active" aria-current="page">Application
+                    Analyzer</a>
+                <a th:href="@{/headline_generator}" href="/headline_generator" class="nav-link">AI Headline
+                    Generator</a>
             </nav>
         </div>
     </header>
@@ -56,7 +58,8 @@
                 AI Pre-Verification Assistant
             </div>
             <h1 class="hero-heading">Analyze Before You Apply</h1>
-            <p class="hero-subtext">Evaluate proposed publication titles against existing registered titles and verification rules before submission.</p>
+            <p class="hero-subtext">Evaluate proposed publication titles against existing registered titles and
+                verification rules before submission.</p>
         </section>
 
         <!-- Application Analyzer Card -->
@@ -76,7 +79,8 @@
                         </svg>
                         Publication Context
                     </h2>
-                    <p class="section-subtitle">Specify the domain, location, and periodicity details for title clearance verification.</p>
+                    <p class="section-subtitle">Specify the domain, location, and periodicity details for title
+                        clearance verification.</p>
                 </div>
 
                 <div class="form-grid">
@@ -84,20 +88,23 @@
                     <div class="form-group">
                         <label for="publicationType" class="form-label">Publication Type <span
                                 class="required-star">*</span></label>
-                        <select id="publicationType" class="form-control" required aria-required="true" aria-describedby="publicationTypeError">
+                        <select id="publicationType" class="form-control" required aria-required="true"
+                            aria-describedby="publicationTypeError">
                             <option value="" disabled selected>Select Publication Type</option>
                             <option value="Newspaper">Newspaper</option>
                             <option value="Magazine">Magazine</option>
                             <option value="Journal">Journal</option>
                             <option value="Other">Other</option>
                         </select>
-                        <span class="error-message" id="publicationTypeError" role="alert">Please select a publication type</span>
+                        <span class="error-message" id="publicationTypeError" role="alert">Please select a publication
+                            type</span>
                     </div>
 
                     <!-- Language -->
                     <div class="form-group">
                         <label for="language" class="form-label">Language <span class="required-star">*</span></label>
-                        <select id="language" class="form-control" required aria-required="true" aria-describedby="languageError">
+                        <select id="language" class="form-control" required aria-required="true"
+                            aria-describedby="languageError">
                             <option value="" disabled selected>Select Language</option>
                             <option value="English">English</option>
                             <option value="Kannada">Kannada</option>
@@ -116,7 +123,8 @@
                     <div class="form-group">
                         <label for="state" class="form-label">State / Union Territory <span
                                 class="required-star">*</span></label>
-                        <select id="state" class="form-control" required aria-required="true" aria-describedby="stateError">
+                        <select id="state" class="form-control" required aria-required="true"
+                            aria-describedby="stateError">
                             <option value="" disabled selected>Select State</option>
                             <option value="Andhra Pradesh">Andhra Pradesh</option>
                             <option value="Assam">Assam</option>
@@ -158,7 +166,8 @@
                     <div class="form-group full-width">
                         <label for="periodicity" class="form-label">Periodicity <span
                                 class="required-star">*</span></label>
-                        <select id="periodicity" class="form-control" required aria-required="true" aria-describedby="periodicityError">
+                        <select id="periodicity" class="form-control" required aria-required="true"
+                            aria-describedby="periodicityError">
                             <option value="" disabled selected>Select Periodicity</option>
                             <option value="Daily">Daily</option>
                             <option value="Weekly">Weekly</option>
@@ -166,7 +175,8 @@
                             <option value="Monthly">Monthly</option>
                             <option value="Other">Other</option>
                         </select>
-                        <span class="error-message" id="periodicityError" role="alert">Please select a periodicity</span>
+                        <span class="error-message" id="periodicityError" role="alert">Please select a
+                            periodicity</span>
                     </div>
                 </div>
 
@@ -183,7 +193,8 @@
                         </svg>
                         Proposed Titles
                     </h2>
-                    <p class="section-subtitle">Enter proposed publication title options in order of preference (up to 5 titles).</p>
+                    <p class="section-subtitle">Enter proposed publication title options in order of preference (up to 5
+                        titles).</p>
                 </div>
 
                 <div class="titles-list" id="titlesList">
@@ -193,8 +204,10 @@
                         <div class="title-input-wrapper">
                             <label for="title_1" class="sr-only">Proposed Title Option 1</label>
                             <input type="text" class="form-control title-input" id="title_1"
-                                placeholder="e.g. Deccan Herald" autocomplete="off" required aria-required="true" aria-describedby="titleError_1" />
-                            <span class="error-message" id="titleError_1" role="alert">Please enter a proposed title</span>
+                                placeholder="e.g. Deccan Herald" autocomplete="off" required aria-required="true"
+                                aria-describedby="titleError_1" />
+                            <span class="error-message" id="titleError_1" role="alert">Please enter a proposed
+                                title</span>
                         </div>
 
                         <button type="button" class="btn-remove-title" title="Remove Title" style="display: none;"
@@ -234,8 +247,8 @@
     </main>
 
     <!-- Submission Popup Modal -->
-    <div class="modal-backdrop" id="confirmationModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalTitle"
-        aria-describedby="modalMessage">
+    <div class="modal-backdrop" id="confirmationModal" role="dialog" aria-modal="true" aria-hidden="true"
+        aria-labelledby="modalTitle" aria-describedby="modalMessage">
         <div class="modal-card">
             <button type="button" class="modal-close-icon" id="modalCloseIconBtn" aria-label="Close modal dialog">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -253,10 +266,12 @@
             </div>
 
             <h2 class="modal-heading" id="modalTitle">Application Submitted</h2>
-            <p class="modal-message" id="modalMessage">Your title options have been captured successfully. The verification engine will analyze them in the next step.</p>
+            <p class="modal-message" id="modalMessage">Your title options have been captured successfully. The
+                verification engine will analyze them in the next step.</p>
 
             <div class="modal-actions">
-                <button type="button" class="btn-primary modal-btn-primary" id="modalContinueBtn">View Detailed Analysis &rarr;</button>
+                <button type="button" class="btn-primary modal-btn-primary" id="modalContinueBtn">View Detailed Analysis
+                    &rarr;</button>
                 <button type="button" class="btn-secondary modal-btn-secondary" id="modalCloseBtn">Close</button>
             </div>
         </div>
