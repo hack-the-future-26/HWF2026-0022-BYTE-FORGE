@@ -1,3 +1,70 @@
+# TitleVerify AI
+
+## Pre-Submission Approval Copilot
+
+TitleVerify AI is an AI-assisted system that helps verify proposed newspaper and publication titles before submission.
+
+It checks titles against existing titles using multiple similarity techniques, publication rules, and AI-based semantic analysis.
+
+## Features
+
+- Exact title matching
+- Fuzzy similarity using Levenshtein distance
+- Phonetic similarity checking
+- AI-based semantic similarity using Gemini embeddings
+- Rule-based verification
+- Risk score and decision: Accept, Review, or High Risk
+- Detailed verification report
+- AI Headline Generator
+- Generates and verifies 5 headlines
+- Multilingual headline generation
+
+## Technology Stack
+
+- Java 17
+- Spring Boot
+- PostgreSQL
+- HTML, CSS, JavaScript
+- Thymeleaf
+- Gemini AI
+- Maven
+- Docker
+
+## How It Works
+
+```text
+Publication Details + Proposed Title
+              ↓
+       Similarity Analysis
+              ↓
+          Rule Checks
+              ↓
+         Risk Scoring
+              ↓
+      Accept / Review / High Risk
+AI Headline Generator
+
+Users can provide an article or news content. The system generates 5 headlines, verifies each one, and recommends the most suitable headline based on content relevance and verification risk.
+
+Live Prototype
+
+https://titleverify-ai.onrender.com
+
+Team
+
+Byte Forge
+Team ID: HWF2026-0022
+
+Darshan KC — Backend + AI + Integration
+Chaitra R — Title Verification Frontend
+Arpitha S — AI Headline Generator Frontend
+Akshay — Testing + Documentation
+Project Status
+
+Working prototype developed for Hack The Future '26.
+
+
+
 # 🚀 Hack the Future 26
 ## Team Repository Guide
 
