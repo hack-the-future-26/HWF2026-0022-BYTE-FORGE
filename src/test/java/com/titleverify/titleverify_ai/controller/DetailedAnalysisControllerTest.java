@@ -3,6 +3,7 @@ package com.titleverify.titleverify_ai.controller;
 import com.titleverify.titleverify_ai.dto.ApplicationAnalysisDetailsDto;
 import com.titleverify.titleverify_ai.dto.RuleResultDto;
 import com.titleverify.titleverify_ai.dto.RuleSeverity;
+import com.titleverify.titleverify_ai.dto.TitleComparisonDto;
 import com.titleverify.titleverify_ai.dto.TitleVerificationResultDto;
 import com.titleverify.titleverify_ai.dto.VerificationHistoryItemDto;
 import com.titleverify.titleverify_ai.service.PublicationApplicationService;
@@ -106,5 +107,42 @@ class DetailedAnalysisControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("history"))
                 .andExpect(model().attributeExists("historyItems"));
+    }
+
+    @Test
+    @DisplayName("GET /comparison/{id} should return 200 OK and render title_comparison view with comparisonDetails")
+    void testShowComparisonPageSuccess() throws Exception {
+        Long appId = 100L;
+
+        TitleVerificationResultDto titleResult = new TitleVerificationResultDto(
+                "Delhi Chronicle", "delhi chronicle", false, null, List.of(),
+                "COMPLETED", List.of(), 0.1, null, 0.1, null, 0.1, null,
+                List.of(), "ACCEPT", 10.0, "LOW", 90.0, null,
+                List.of(), "Approved"
+        );
+
+        TitleComparisonDto comparisonDto = new TitleComparisonDto(
+                appId, "Newspaper", "English", "Delhi", "Central", "Daily",
+                LocalDateTime.now(), List.of(titleResult), titleResult,
+                "Deterministic recommendation ranking"
+        );
+
+        when(applicationService.getComparisonDetails(appId)).thenReturn(comparisonDto);
+
+        mockMvc.perform(get("/comparison/" + appId))
+                .andExpect(status().isOk())
+                .andExpect(view().name("title_comparison"))
+                .andExpect(model().attributeExists("comparisonDetails"));
+    }
+
+    @Test
+    @DisplayName("GET /comparison/{id} with invalid application ID should return 404 NOT FOUND")
+    void testShowComparisonPageNotFound() throws Exception {
+        Long invalidId = 99999L;
+        when(applicationService.getComparisonDetails(invalidId))
+                .thenThrow(new IllegalArgumentException("Application not found with ID: " + invalidId));
+
+        mockMvc.perform(get("/comparison/" + invalidId))
+                .andExpect(status().isNotFound());
     }
 }

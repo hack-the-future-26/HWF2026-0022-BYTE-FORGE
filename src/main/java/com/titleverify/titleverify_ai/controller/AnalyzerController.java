@@ -1,6 +1,7 @@
 package com.titleverify.titleverify_ai.controller;
 
 import com.titleverify.titleverify_ai.dto.ApplicationAnalysisDetailsDto;
+import com.titleverify.titleverify_ai.dto.TitleComparisonDto;
 import com.titleverify.titleverify_ai.service.PublicationApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -38,5 +39,16 @@ public class AnalyzerController {
     public String showHistoryPage(Model model) {
         model.addAttribute("historyItems", applicationService.getHistorySummaries());
         return "history";
+    }
+
+    @GetMapping("/comparison/{applicationId}")
+    public String showComparisonPage(@PathVariable("applicationId") Long applicationId, Model model) {
+        try {
+            TitleComparisonDto comparison = applicationService.getComparisonDetails(applicationId);
+            model.addAttribute("comparisonDetails", comparison);
+            return "title_comparison";
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 }

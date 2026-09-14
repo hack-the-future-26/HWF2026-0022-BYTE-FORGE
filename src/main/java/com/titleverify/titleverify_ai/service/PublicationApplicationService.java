@@ -3,6 +3,8 @@ package com.titleverify.titleverify_ai.service;
 import com.titleverify.titleverify_ai.dto.ApplicationAnalysisDetailsDto;
 import com.titleverify.titleverify_ai.dto.ApplicationRequestDto;
 import com.titleverify.titleverify_ai.dto.ApplicationResponseDto;
+import com.titleverify.titleverify_ai.dto.RuleResultDto;
+import com.titleverify.titleverify_ai.dto.TitleComparisonDto;
 import com.titleverify.titleverify_ai.dto.TitleVerificationResultDto;
 import com.titleverify.titleverify_ai.dto.VerificationHistoryItemDto;
 import com.titleverify.titleverify_ai.entity.PublicationApplication;
@@ -187,6 +189,143 @@ public class PublicationApplicationService {
         }
 
         return historyList;
+    }
+
+    @Transactional(readOnly = true)
+    public TitleComparisonDto getComparisonDetails(Long applicationId) {
+        ApplicationAnalysisDetailsDto details = getApplicationDetails(applicationId);
+        List<TitleVerificationResultDto> verificationResults = details.getVerificationResults();
+
+        if (verificationResults == null || verificationResults.isEmpty()) {
+            return new TitleComparisonDto(
+                    details.getApplicationId(),
+                    details.getPublicationType(),
+                    details.getLanguage(),
+                    details.getState(),
+                    details.getDistrict(),
+                    details.getPeriodicity(),
+                    details.getCreatedAt(),
+                    new ArrayList<>(),
+                    null,
+                    "No title verification results available for comparison."
+            );
+        }
+
+        int bestIndex = 0;
+        TitleVerificationResultDto bestTitle = verificationResults.get(0);
+
+        for (int i = 1; i < verificationResults.size(); i++) {
+            TitleVerificationResultDto candidate = verificationResults.get(i);
+            if (compareCandidates(candidate, i, bestTitle, bestIndex) < 0) {
+                bestTitle = candidate;
+                bestIndex = i;
+            }
+        }
+
+        String explanation = generateRecommendationExplanation(bestTitle, bestIndex + 1, verificationResults.size());
+
+        return new TitleComparisonDto(
+                details.getApplicationId(),
+                details.getPublicationType(),
+                details.getLanguage(),
+                details.getState(),
+                details.getDistrict(),
+                details.getPeriodicity(),
+                details.getCreatedAt(),
+                verificationResults,
+                bestTitle,
+                explanation
+        );
+    }
+
+    private int compareCandidates(TitleVerificationResultDto a, int indexA, TitleVerificationResultDto b, int indexB) {
+        int rankA = getDecisionRank(a.getFinalDecision());
+        int rankB = getDecisionRank(b.getFinalDecision());
+        if (rankA != rankB) {
+            return Integer.compare(rankA, rankB);
+        }
+
+        double riskA = a.getRiskScore() != null ? a.getRiskScore() : 100.0;
+        double riskB = b.getRiskScore() != null ? b.getRiskScore() : 100.0;
+        if (Double.compare(riskA, riskB) != 0) {
+            return Double.compare(riskA, riskB);
+        }
+
+        long rulesA = countTriggeredRules(a);
+        long rulesB = countTriggeredRules(b);
+        if (rulesA != rulesB) {
+            return Long.compare(rulesA, rulesB);
+        }
+
+        double maxSimA = getMaxSimilarity(a);
+        double maxSimB = getMaxSimilarity(b);
+        if (Double.compare(maxSimA, maxSimB) != 0) {
+            return Double.compare(maxSimA, maxSimB);
+        }
+
+        return Integer.compare(indexA, indexB);
+    }
+
+    private int getDecisionRank(String decision) {
+        if (decision == null) return 4;
+        if ("ACCEPT".equalsIgnoreCase(decision)) return 1;
+        if ("REVIEW".equalsIgnoreCase(decision)) return 2;
+        if ("HIGH RISK".equalsIgnoreCase(decision) || "HIGH_RISK".equalsIgnoreCase(decision)) return 3;
+        return 4;
+    }
+
+    private long countTriggeredRules(TitleVerificationResultDto result) {
+        if (result.getRuleResults() == null) return 0;
+        return result.getRuleResults().stream().filter(RuleResultDto::isTriggered).count();
+    }
+
+    private double getMaxSimilarity(TitleVerificationResultDto result) {
+        double max = 0.0;
+        if (result.getHighestFuzzySimilarity() != null) {
+            max = Math.max(max, result.getHighestFuzzySimilarity());
+        }
+        if (result.getHighestPhoneticSimilarity() != null) {
+            max = Math.max(max, result.getHighestPhoneticSimilarity());
+        }
+        if (result.getHighestSemanticSimilarity() != null) {
+            max = Math.max(max, result.getHighestSemanticSimilarity());
+        }
+        if (result.getHighestBm25Similarity() != null) {
+            max = Math.max(max, result.getHighestBm25Similarity());
+        }
+        return max;
+    }
+
+    private String generateRecommendationExplanation(TitleVerificationResultDto title, int optionNumber, int totalOptions) {
+        if (title == null) {
+            return "No recommendation available.";
+        }
+
+        String titleText = title.getProposedTitle() != null ? title.getProposedTitle() : "Option #" + optionNumber;
+        String decision = title.getFinalDecision() != null ? title.getFinalDecision().toUpperCase() : "UNKNOWN";
+        String riskStr = title.getRiskScore() != null ? String.format("%.1f", title.getRiskScore()) : "N/A";
+        long ruleCount = countTriggeredRules(title);
+
+        if (totalOptions <= 1) {
+            return String.format("Option #%d ('%s') is the sole submitted title with an overall decision of %s (Risk Score: %s).",
+                    optionNumber, titleText, decision, riskStr);
+        }
+
+        if ("ACCEPT".equalsIgnoreCase(decision)) {
+            if (ruleCount == 0) {
+                return String.format("Option #%d ('%s') is recommended as the safest choice with an ACCEPT decision, the lowest risk score (%s) among submitted options, and no rule conflicts.",
+                        optionNumber, titleText, riskStr);
+            } else {
+                return String.format("Option #%d ('%s') is recommended as the safest choice with an ACCEPT decision and the lowest risk score (%s) among submitted options.",
+                        optionNumber, titleText, riskStr);
+            }
+        } else if ("REVIEW".equalsIgnoreCase(decision)) {
+            return String.format("Option #%d ('%s') is recommended as the most viable option among the submitted titles with a REVIEW status and a risk score of %s.",
+                    optionNumber, titleText, riskStr);
+        } else {
+            return String.format("Option #%d ('%s') is the least conflicting option among the submitted titles, though all options carry a HIGH RISK classification (Risk Score: %s).",
+                    optionNumber, titleText, riskStr);
+        }
     }
 
     private void validateRequest(ApplicationRequestDto dto) {
