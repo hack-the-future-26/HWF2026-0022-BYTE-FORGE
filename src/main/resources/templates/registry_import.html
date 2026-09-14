@@ -175,6 +175,20 @@
                 </div>
             </div>
 
+            <!-- Skipped Duplicates Section -->
+            <div class="duplicates-section" id="duplicatesSection">
+                <h3 class="duplicates-heading">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Skipped Duplicates
+                </h3>
+                <ul class="duplicates-list" id="duplicatesList"></ul>
+            </div>
+
             <!-- Error Details Section -->
             <div class="errors-section" id="errorsSection">
                 <h3 class="errors-heading">
@@ -219,6 +233,8 @@
             const statDuplicates = document.getElementById('statDuplicates');
             const statInvalid = document.getElementById('statInvalid');
             const statErrors = document.getElementById('statErrors');
+            const duplicatesSection = document.getElementById('duplicatesSection');
+            const duplicatesList = document.getElementById('duplicatesList');
             const errorsSection = document.getElementById('errorsSection');
             const errorsList = document.getElementById('errorsList');
 
@@ -334,10 +350,39 @@
                         statInvalid.textContent = data.invalidCount != null ? data.invalidCount : 0;
                         statErrors.textContent = data.errorCount != null ? data.errorCount : 0;
 
-                        // Errors list
+                        // Separate duplicate notices from actual error/invalid messages
+                        const allDetails = data.errorDetails || [];
+                        const duplicateItems = [];
+                        const errorItems = [];
+
+                        allDetails.forEach(msg => {
+                            const lower = msg.toLowerCase();
+                            if (lower.includes('duplicate') || lower.includes('already exists')) {
+                                duplicateItems.push(msg);
+                            } else {
+                                errorItems.push(msg);
+                            }
+                        });
+
+                        // Display Skipped Duplicates section if duplicateCount > 0 and duplicate items exist
+                        duplicatesList.innerHTML = '';
+                        if (data.duplicateCount > 0 && duplicateItems.length > 0) {
+                            duplicateItems.forEach(dup => {
+                                const li = document.createElement('li');
+                                li.className = 'duplicates-list-item';
+                                li.textContent = dup;
+                                duplicatesList.appendChild(li);
+                            });
+                            duplicatesSection.style.display = 'block';
+                        } else {
+                            duplicatesSection.style.display = 'none';
+                        }
+
+                        // Display Import Errors section only when actual errors exist
                         errorsList.innerHTML = '';
-                        if (data.errorDetails && data.errorDetails.length > 0) {
-                            data.errorDetails.forEach(err => {
+                        const hasRealErrors = (data.errorCount > 0 || data.invalidCount > 0) && errorItems.length > 0;
+                        if (hasRealErrors) {
+                            errorItems.forEach(err => {
                                 const li = document.createElement('li');
                                 li.className = 'errors-list-item';
                                 li.textContent = err;

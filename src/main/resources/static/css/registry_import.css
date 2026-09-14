@@ -530,6 +530,45 @@ body {
     color: var(--text-light);
 }
 
+/* Skipped Duplicates Section (Warning / Informational) */
+.duplicates-section {
+    display: none;
+    margin-top: 24px;
+    background-color: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+
+.duplicates-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--warning-text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.duplicates-list {
+    list-style: none;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.duplicates-list-item {
+    font-size: 13px;
+    color: var(--warning-text);
+    background-color: #ffffff;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
 /* Error Details Section */
 .errors-section {
     display: none;
