@@ -197,6 +197,40 @@ class VerificationServiceTest {
     }
 
     @Test
+    @DisplayName("Should populate BM25 score and level on candidate matches and compute highestBm25Similarity")
+    void testVerifyProposedTitle_Bm25MultiSignalPopulated() {
+        String proposed = "Karnataka Herald";
+        String normalizedProposed = "karnataka herald";
+
+        RegisteredPublicationTitle candidate1 = new RegisteredPublicationTitle(
+                "Karnataka Daily", "karnataka daily", "English", "Karnataka", "Daily", "Newspaper", "DEMO_DATA"
+        );
+        RegisteredPublicationTitle candidate2 = new RegisteredPublicationTitle(
+                "Delhi Herald", "delhi herald", "English", "Delhi", "Daily", "Newspaper", "DEMO_DATA"
+        );
+
+        when(exactMatchService.findExactMatch(normalizedProposed)).thenReturn(Optional.empty());
+        when(candidateRetrievalService.retrieveCandidates(normalizedProposed)).thenReturn(List.of(candidate1, candidate2));
+
+        TitleVerificationResultDto result = verificationService.verifyProposedTitle(proposed);
+
+        assertNotNull(result);
+        assertFalse(result.isExactMatch());
+        assertNotNull(result.getCandidateMatches());
+        assertEquals(2, result.getCandidateMatches().size());
+
+        for (var match : result.getCandidateMatches()) {
+            assertNotNull(match.getBm25SimilarityScore(), "BM25 score must be populated");
+            assertNotNull(match.getBm25SimilarityLevel(), "BM25 level must be populated");
+            assertTrue(match.getBm25SimilarityScore() > 0.0, "Word overlap should produce BM25 score > 0");
+        }
+
+        assertNotNull(result.getHighestBm25Similarity(), "Highest BM25 similarity must be populated");
+        assertTrue(result.getHighestBm25Similarity() > 0.0);
+        assertNotNull(result.getTopBm25Match(), "Top BM25 match title must be populated");
+    }
+
+    @Test
     @DisplayName("Should gracefully handle candidate retrieval database failure without crashing")
     void testVerifyProposedTitle_CandidateRetrievalDatabaseFailureHandled() {
         when(exactMatchService.findExactMatch("bengaluru observer")).thenReturn(Optional.empty());

@@ -17,6 +17,8 @@ public class TitleVerificationResultDto {
     private String topPhoneticMatch;
     private Double highestSemanticSimilarity;
     private String topSemanticMatch;
+    private Double highestBm25Similarity;
+    private String topBm25Match;
     private List<RuleResultDto> ruleResults;
     private String finalDecision;
     private Double riskScore;
@@ -285,5 +287,21 @@ public class TitleVerificationResultDto {
 
     public void setRecommendation(String recommendation) {
         this.recommendation = recommendation;
+    }
+
+    public Double getHighestBm25Similarity() {
+        return highestBm25Similarity;
+    }
+
+    public void setHighestBm25Similarity(Double highestBm25Similarity) {
+        this.highestBm25Similarity = highestBm25Similarity;
+    }
+
+    public String getTopBm25Match() {
+        return topBm25Match;
+    }
+
+    public void setTopBm25Match(String topBm25Match) {
+        this.topBm25Match = topBm25Match;
     }
 }

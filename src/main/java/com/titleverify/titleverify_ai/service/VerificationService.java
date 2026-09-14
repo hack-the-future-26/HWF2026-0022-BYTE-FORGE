@@ -5,6 +5,7 @@ import com.titleverify.titleverify_ai.entity.RegisteredPublicationTitle;
 import com.titleverify.titleverify_ai.rule.RuleEngineInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,27 +27,47 @@ public class VerificationService {
     private final FuzzySimilarityService fuzzySimilarityService;
     private final PhoneticSimilarityService phoneticSimilarityService;
     private final SemanticSimilarityService semanticSimilarityService;
+    private final Bm25SimilarityService bm25SimilarityService;
     private final RuleEngineService ruleEngineService;
     private final RiskScoringService riskScoringService;
     private final DecisionEngineService decisionEngineService;
     private final DecisionExplanationService decisionExplanationService;
 
     public VerificationService(TitleNormalizationService normalizationService,
-                                ExactMatchService exactMatchService,
-                                CandidateRetrievalService candidateRetrievalService,
-                                FuzzySimilarityService fuzzySimilarityService,
-                                PhoneticSimilarityService phoneticSimilarityService,
-                                SemanticSimilarityService semanticSimilarityService,
-                                RuleEngineService ruleEngineService,
-                                RiskScoringService riskScoringService,
-                                DecisionEngineService decisionEngineService,
-                                DecisionExplanationService decisionExplanationService) {
+                               ExactMatchService exactMatchService,
+                               CandidateRetrievalService candidateRetrievalService,
+                               FuzzySimilarityService fuzzySimilarityService,
+                               PhoneticSimilarityService phoneticSimilarityService,
+                               SemanticSimilarityService semanticSimilarityService,
+                               RuleEngineService ruleEngineService,
+                               RiskScoringService riskScoringService,
+                               DecisionEngineService decisionEngineService,
+                               DecisionExplanationService decisionExplanationService) {
+        this(normalizationService, exactMatchService, candidateRetrievalService,
+                fuzzySimilarityService, phoneticSimilarityService, semanticSimilarityService,
+                null,
+                ruleEngineService, riskScoringService, decisionEngineService, decisionExplanationService);
+    }
+
+    @Autowired
+    public VerificationService(TitleNormalizationService normalizationService,
+                               ExactMatchService exactMatchService,
+                               CandidateRetrievalService candidateRetrievalService,
+                               FuzzySimilarityService fuzzySimilarityService,
+                               PhoneticSimilarityService phoneticSimilarityService,
+                               SemanticSimilarityService semanticSimilarityService,
+                               @Autowired(required = false) Bm25SimilarityService bm25SimilarityService,
+                               RuleEngineService ruleEngineService,
+                               RiskScoringService riskScoringService,
+                               DecisionEngineService decisionEngineService,
+                               DecisionExplanationService decisionExplanationService) {
         this.normalizationService = normalizationService;
         this.exactMatchService = exactMatchService;
         this.candidateRetrievalService = candidateRetrievalService;
         this.fuzzySimilarityService = fuzzySimilarityService;
         this.phoneticSimilarityService = phoneticSimilarityService;
         this.semanticSimilarityService = semanticSimilarityService;
+        this.bm25SimilarityService = bm25SimilarityService != null ? bm25SimilarityService : new Bm25SimilarityService(normalizationService);
         this.ruleEngineService = ruleEngineService;
         this.riskScoringService = riskScoringService;
         this.decisionEngineService = decisionEngineService;
@@ -123,7 +144,7 @@ public class VerificationService {
                     ? candidateRetrievalService.retrieveCandidates(normalizedProposed)
                     : new ArrayList<>();
 
-            // Stage 3: Multi-Signal Similarity Analysis (Fuzzy + Phonetic + Semantic)
+            // Stage 3: Candidate Similarity Analysis
             List<CandidateMatchDto> candidateMatches = new ArrayList<>();
             for (RegisteredPublicationTitle candidate : candidateEntities) {
                 if (candidate == null) continue;
@@ -133,15 +154,12 @@ public class VerificationService {
                     candidateNorm = normalizationService != null ? normalizationService.normalize(candidateTitle) : candidateTitle.toLowerCase();
                 }
 
-                // 1. Fuzzy Levenshtein Similarity
                 double fuzzyScore = fuzzySimilarityService != null ? fuzzySimilarityService.calculateSimilarity(normalizedProposed, candidateNorm) : 0.0;
                 String fuzzyLevel = fuzzySimilarityService != null ? fuzzySimilarityService.classifySimilarityLevel(fuzzyScore) : "LOW";
 
-                // 2. Phonetic Metaphone Similarity
                 double phoneticScore = phoneticSimilarityService != null ? phoneticSimilarityService.calculatePhoneticSimilarity(proposedTitle, candidateTitle) : 0.0;
                 String phoneticLevel = phoneticSimilarityService != null ? phoneticSimilarityService.classifyPhoneticLevel(phoneticScore) : "LOW";
 
-                // 3. Semantic Vector Cosine Similarity (Gemini API Integration with safe fallback)
                 Double semanticScore = null;
                 String semanticLevel = "UNAVAILABLE";
                 if (semanticSimilarityService != null) {
@@ -158,6 +176,19 @@ public class VerificationService {
                     }
                 }
 
+                Double bm25Score = null;
+                String bm25Level = "LOW";
+                if (bm25SimilarityService != null) {
+                    try {
+                        bm25Score = bm25SimilarityService.calculateBm25Similarity(proposedTitle, candidateTitle);
+                        bm25Level = bm25SimilarityService.classifyBm25Level(bm25Score);
+                    } catch (Exception e) {
+                        logger.warn("BM25 similarity computation failed for candidate '{}': {}", candidateTitle, e.getMessage());
+                        bm25Score = 0.0;
+                        bm25Level = "LOW";
+                    }
+                }
+
                 candidateMatches.add(new CandidateMatchDto(
                         candidateTitle,
                         candidateNorm,
@@ -166,15 +197,19 @@ public class VerificationService {
                         phoneticScore,
                         phoneticLevel,
                         semanticScore,
-                        semanticLevel
+                        semanticLevel,
+                        bm25Score,
+                        bm25Level
                 ));
             }
 
-            // Rank candidates by highest peak multi-signal score (max of fuzzy, phonetic, or semantic)
             candidateMatches.sort(Comparator.comparingDouble((CandidateMatchDto c) -> {
                 double maxScore = Math.max(c.getSimilarityScore(), c.getPhoneticSimilarityScore());
                 if (c.getSemanticSimilarityScore() != null) {
                     maxScore = Math.max(maxScore, c.getSemanticSimilarityScore());
+                }
+                if (c.getBm25SimilarityScore() != null) {
+                    maxScore = Math.max(maxScore, c.getBm25SimilarityScore());
                 }
                 return maxScore;
             }).reversed());
@@ -209,6 +244,17 @@ public class VerificationService {
                     .max(Comparator.comparingDouble(CandidateMatchDto::getSemanticSimilarityScore))
                     .map(CandidateMatchDto::getCandidateTitle).orElse(null);
 
+            Double highestBm25Similarity = candidateMatches.stream()
+                    .map(CandidateMatchDto::getBm25SimilarityScore)
+                    .filter(Objects::nonNull)
+                    .max(Double::compareTo)
+                    .orElse(null);
+
+            String topBm25Match = candidateMatches.stream()
+                    .filter(c -> c.getBm25SimilarityScore() != null)
+                    .max(Comparator.comparingDouble(CandidateMatchDto::getBm25SimilarityScore))
+                    .map(CandidateMatchDto::getCandidateTitle).orElse(null);
+
             // Stage 4: Deterministic Rule Engine Evaluation
             RuleEngineInput ruleInput = new RuleEngineInput(
                     proposedTitle,
@@ -241,7 +287,7 @@ public class VerificationService {
                             ruleResults, riskScoreResult, decision
                     ) : new DecisionExplanationDto(decision.getCode(), riskScoreResult.getRiskScore(), riskScoreResult.getRiskLevel(), riskScoreResult.getApprovalConfidence(), closestCandidate, List.of(), "");
 
-            return new TitleVerificationResultDto(
+            TitleVerificationResultDto resultDto = new TitleVerificationResultDto(
                     proposedTitle,
                     normalizedProposed,
                     isExactMatch,
@@ -264,6 +310,9 @@ public class VerificationService {
                     explanation.getReasons(),
                     explanation.getRecommendation()
             );
+            resultDto.setHighestBm25Similarity(highestBm25Similarity);
+            resultDto.setTopBm25Match(topBm25Match);
+            return resultDto;
         } catch (Exception e) {
             logger.error("Unexpected error during title verification for '{}': {}", proposedTitle, e.getMessage(), e);
             String reason = "Automated verification encountered a system error: " + (e.getMessage() != null ? e.getMessage() : "Unknown error") + ". Flagged for manual review.";
@@ -324,5 +373,9 @@ public class VerificationService {
 
     public DecisionExplanationService getDecisionExplanationService() {
         return decisionExplanationService;
+    }
+
+    public Bm25SimilarityService getBm25SimilarityService() {
+        return bm25SimilarityService;
     }
 }

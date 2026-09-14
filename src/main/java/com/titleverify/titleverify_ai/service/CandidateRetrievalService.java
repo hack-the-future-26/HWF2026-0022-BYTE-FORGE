@@ -4,6 +4,7 @@ import com.titleverify.titleverify_ai.entity.RegisteredPublicationTitle;
 import com.titleverify.titleverify_ai.repository.RegisteredPublicationTitleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,9 +16,17 @@ public class CandidateRetrievalService {
     private static final Logger logger = LoggerFactory.getLogger(CandidateRetrievalService.class);
 
     private final RegisteredPublicationTitleRepository registeredTitleRepository;
+    private final Bm25SimilarityService bm25SimilarityService;
 
     public CandidateRetrievalService(RegisteredPublicationTitleRepository registeredTitleRepository) {
+        this(registeredTitleRepository, null);
+    }
+
+    @Autowired
+    public CandidateRetrievalService(RegisteredPublicationTitleRepository registeredTitleRepository,
+                                     @Autowired(required = false) Bm25SimilarityService bm25SimilarityService) {
         this.registeredTitleRepository = registeredTitleRepository;
+        this.bm25SimilarityService = bm25SimilarityService;
     }
 
     public List<RegisteredPublicationTitle> retrieveCandidates(String normalizedTitle) {
@@ -44,6 +53,10 @@ public class CandidateRetrievalService {
                         }
                     }
                 }
+            }
+
+            if (bm25SimilarityService != null && candidates.size() > 1) {
+                candidates = bm25SimilarityService.rankCandidates(normalizedTitle, candidates);
             }
 
             return candidates;

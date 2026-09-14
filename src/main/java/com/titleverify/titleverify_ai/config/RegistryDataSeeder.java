@@ -72,11 +72,20 @@ public class RegistryDataSeeder implements CommandLineRunner {
 
     private final RegisteredPublicationTitleRepository repository;
     private final TitleNormalizationService normalizationService;
+    private final com.titleverify.titleverify_ai.service.Bm25SimilarityService bm25SimilarityService;
 
     public RegistryDataSeeder(RegisteredPublicationTitleRepository repository,
             TitleNormalizationService normalizationService) {
+        this(repository, normalizationService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RegistryDataSeeder(RegisteredPublicationTitleRepository repository,
+            TitleNormalizationService normalizationService,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) com.titleverify.titleverify_ai.service.Bm25SimilarityService bm25SimilarityService) {
         this.repository = repository;
         this.normalizationService = normalizationService;
+        this.bm25SimilarityService = bm25SimilarityService;
     }
 
     @Override
@@ -134,6 +143,10 @@ public class RegistryDataSeeder implements CommandLineRunner {
             log.info("Successfully seeded {} new DEMO_DATA publication titles into registry.", insertedCount);
         } else {
             log.info("All DEMO_DATA publication titles are already present in the registry. No new records inserted.");
+        }
+
+        if (bm25SimilarityService != null) {
+            bm25SimilarityService.refreshCorpusStats();
         }
     }
 
