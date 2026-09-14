@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - 5-Title Comparison Matrix</title>
+    <meta name="description" content="Side-by-side comparison matrix for proposed publication titles. Compare risk scores, similarity signals, policy findings, and AI clearance recommendations.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" th:href="@{/css/analyzer.css}" href="/css/analyzer.css">
+    <link rel="stylesheet" th:href="@{/css/detailed_analysis.css}" href="/css/detailed_analysis.css">
+
+    <style>
+        /* Dedicated Comparison Matrix Styles */
+        .comparison-meta-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .meta-chips-grid {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+        }
+
+        .meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13.5px;
+            color: var(--text-muted);
+        }
+
+        .meta-chip-label {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .meta-chip-val {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .app-id-pill {
+            display: inline-flex;
+            align-items: center;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.3px;
+        }
+
+        /* Recommended Section */
+        .recommendation-banner-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 2px solid #86efac;
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rec-accent-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 6px;
+            background-color: #16a34a;
+        }
+
+        .rec-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .rec-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #15803d;
+            background-color: #dcfce7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .rec-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .rec-option-badge {
+            background-color: #166534;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.3px;
+        }
+
+        .rec-title-text {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.4px;
+        }
+
+        .rec-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border: 1px solid #bbf7d0;
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+        }
+
+        .rec-metric-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rec-metric-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #166534;
+        }
+
+        .rec-metric-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .rec-explanation-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background-color: #ffffff;
+            border: 1px solid #bbf7d0;
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            font-size: 14.5px;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        .rec-explanation-box svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Matrix Section */
+        .matrix-section {
+            margin-bottom: 40px;
+        }
+
+        .matrix-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .matrix-title-group h2 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .matrix-title-group p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .comparison-table-wrapper {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+            min-width: 1050px;
+        }
+
+        .comparison-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border-bottom: 2px solid #334155;
+            white-space: nowrap;
+        }
+
+        .comparison-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .comparison-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Recommended Row Highlight */
+        .comparison-table tr.row-recommended {
+            background-color: #f0fdf4 !important;
+            border-left: 4px solid #16a34a;
+        }
+
+        .comparison-table tr.row-recommended td {
+            border-bottom-color: #bbf7d0;
+        }
+
+        .badge-rec-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background-color: #16a34a;
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-top: 4px;
+        }
+
+        .option-tag {
+            font-size: 13px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .table-title-name {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: #0f172a;
+            display: block;
+            max-width: 220px;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .score-display {
+            font-weight: 800;
+            font-size: 14px;
+            color: #0f172a;
+        }
+
+        .level-chip {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+        }
+
+        .level-low {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .level-medium {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+
+        .level-high {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .signal-metric {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #0f172a;
+        }
+
+        .subtext-match {
+            font-size: 11.5px;
+            color: var(--text-light);
+            display: block;
+            margin-top: 2px;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .closest-match-cell {
+            max-width: 160px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            word-break: break-word;
+        }
+
+        .rules-cell {
+            max-width: 180px;
+        }
+
+        .badge-compliant {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #15803d;
+            background-color: #dcfce7;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .triggered-rule-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            max-width: 170px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn-table-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            background-color: #eff6ff;
+            color: var(--primary-blue);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-table-action:hover {
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            border-color: var(--primary-blue);
+        }
+
+        /* Empty State */
+        .empty-state-card {
+            text-align: center;
+            padding: 64px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+        }
+
+        .empty-icon-circle {
+            width: 72px;
+            height: 72px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-light);
+        }
+
+        .empty-heading {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.4px;
+        }
+
+        .empty-text {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 480px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Deep Navy Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link">Application Analyzer</a>
+                <a th:href="@{/headline-generator}" href="/headline-generator" class="nav-link">AI Headline Generator</a>
+                <a th:href="@{/history}" href="/history" class="nav-link">Verification History</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Title Comparison Matrix
+            </div>
+            <h1 class="hero-heading">5-Title Side-by-Side Comparison</h1>
+            <p class="hero-subtext">
+                Comprehensive multi-signal evaluation comparing clearance feasibility, similarity scores, and policy compliance across all proposed title options.
+            </p>
+        </section>
+
+        <!-- Content Area when comparisonDetails is available -->
+        <div th:if="${comparisonDetails != null}">
+
+            <!-- Application Metadata Chips -->
+            <div class="comparison-meta-card">
+                <div class="meta-chips-grid">
+                    <span class="app-id-pill" th:text="'APPLICATION #' + ${comparisonDetails.applicationId}">APPLICATION #1</span>
+                    <div class="meta-chip">
+                        <span class="meta-chip-label">Type:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.publicationType}">Newspaper</span>
+                    </div>
+                    <div class="meta-chip">
+                        <span class="meta-chip-label">Language:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.language}">English</span>
+                    </div>
+                    <div class="meta-chip">
+                        <span class="meta-chip-label">State:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.state}">Delhi</span>
+                    </div>
+                    <div class="meta-chip">
+                        <span class="meta-chip-label">District:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.district}">Central</span>
+                    </div>
+                    <div class="meta-chip">
+                        <span class="meta-chip-label">Periodicity:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.periodicity}">Daily</span>
+                    </div>
+                    <div class="meta-chip" th:if="${comparisonDetails.createdAt != null}">
+                        <span class="meta-chip-label">Submitted:</span>
+                        <span class="meta-chip-val" th:text="${comparisonDetails.formattedCreatedAt}">Date</span>
+                    </div>
+                </div>
+                <div>
+                    <a th:href="@{'/analysis/' + ${comparisonDetails.applicationId}}" class="btn-comparison">
+                        <span>Inspect in Full Report &rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- C. Recommendation Section -->
+            <section class="recommendation-banner-card" th:if="${comparisonDetails.recommendedTitle != null}">
+                <div class="rec-accent-strip"></div>
+                <div class="rec-top-row">
+                    <span class="rec-eyebrow">
+                        ★ RECOMMENDED CHOICE
+                    </span>
+                    <span class="badge-decision"
+                          th:classappend="${comparisonDetails.recommendedTitle.finalDecision == 'ACCEPT'} ? 'accept' : (${comparisonDetails.recommendedTitle.finalDecision == 'REVIEW'} ? 'review' : 'high-risk')">
+                        <span class="status-symbol" th:text="${comparisonDetails.recommendedTitle.finalDecision == 'ACCEPT'} ? '🟢' : (${comparisonDetails.recommendedTitle.finalDecision == 'REVIEW'} ? '🟡' : '🔴')">🟢</span>
+                        <span th:text="${comparisonDetails.recommendedTitle.finalDecision}">ACCEPT</span>
+                    </span>
+                </div>
+
+                <div class="rec-title-wrap">
+                    <span class="rec-option-badge" th:text="'Option #' + ${comparisonDetails.recommendedOptionNumber}">Option #1</span>
+                    <span class="rec-title-text" th:text="${comparisonDetails.recommendedTitle.proposedTitle}">Recommended Title Name</span>
+                </div>
+
+                <div class="rec-metrics-grid">
+                    <div class="rec-metric-item">
+                        <span class="rec-metric-label">Risk Score</span>
+                        <span class="rec-metric-val" th:text="${comparisonDetails.recommendedTitle.riskScore != null ? #numbers.formatDecimal(comparisonDetails.recommendedTitle.riskScore, 1, 1) : '0.0'}">10.0</span>
+                    </div>
+                    <div class="rec-metric-item">
+                        <span class="rec-metric-label">Risk Level</span>
+                        <span class="rec-metric-val" th:text="${comparisonDetails.recommendedTitle.riskLevel != null ? comparisonDetails.recommendedTitle.riskLevel : 'LOW'}">LOW</span>
+                    </div>
+                    <div class="rec-metric-item">
+                        <span class="rec-metric-label">Approval Confidence</span>
+                        <span class="rec-metric-val" th:text="${comparisonDetails.recommendedTitle.approvalConfidence != null ? #numbers.formatDecimal(comparisonDetails.recommendedTitle.approvalConfidence, 1, 1) + '%' : 'N/A'}">90.0%</span>
+                    </div>
+                    <div class="rec-metric-item">
+                        <span class="rec-metric-label">Closest Existing Title</span>
+                        <span class="rec-metric-val" style="font-size: 16px; word-break: break-word;" th:text="${comparisonDetails.recommendedTitle.closestMatch != null and !#strings.isEmpty(comparisonDetails.recommendedTitle.closestMatch) ? comparisonDetails.recommendedTitle.closestMatch : 'None'}">None</span>
+                    </div>
+                </div>
+
+                <div class="rec-explanation-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <div>
+                        <strong>Recommendation Analysis: </strong>
+                        <span th:text="${comparisonDetails.recommendationExplanation}">Deterministic ranking rationale.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- D. Comparison Table Section -->
+            <section class="matrix-section" th:if="${comparisonDetails.verificationResults != null and !comparisonDetails.verificationResults.isEmpty()}">
+                <div class="matrix-header">
+                    <div class="matrix-title-group">
+                        <h2>Side-by-Side Comparison Matrix</h2>
+                        <p>Evaluate all submitted title options side-by-side without switching tabs.</p>
+                    </div>
+                </div>
+
+                <div class="comparison-table-wrapper">
+                    <table class="comparison-table" aria-label="Title Comparison Matrix">
+                        <thead>
+                            <tr>
+                                <th scope="col">Option</th>
+                                <th scope="col">Proposed Title</th>
+                                <th scope="col">Decision</th>
+                                <th scope="col">Risk Score</th>
+                                <th scope="col">Risk Level</th>
+                                <th scope="col">Confidence</th>
+                                <th scope="col">BM25</th>
+                                <th scope="col">Fuzzy</th>
+                                <th scope="col">Phonetic</th>
+                                <th scope="col">Semantic</th>
+                                <th scope="col">Closest Registered Title</th>
+                                <th scope="col">Rule Findings</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="result, iterStat : ${comparisonDetails.verificationResults}"
+                                th:classappend="${comparisonDetails.recommendedTitle != null and result.proposedTitle != null and result.proposedTitle.equalsIgnoreCase(comparisonDetails.recommendedTitle.proposedTitle)} ? 'row-recommended' : ''">
+                                
+                                <!-- Option Number & Recommended Tag -->
+                                <td>
+                                    <div class="option-tag" th:text="'Option #' + ${iterStat.index + 1}">Option #1</div>
+                                    <span th:if="${comparisonDetails.recommendedTitle != null and result.proposedTitle != null and result.proposedTitle.equalsIgnoreCase(comparisonDetails.recommendedTitle.proposedTitle)}"
+                                          class="badge-rec-pill">★ Recommended</span>
+                                </td>
+
+                                <!-- Proposed Title -->
+                                <td>
+                                    <strong class="table-title-name" th:text="${result.proposedTitle}">Proposed Title Name</strong>
+                                </td>
+
+                                <!-- Decision -->
+                                <td>
+                                    <span class="badge-decision"
+                                          th:classappend="${result.finalDecision == 'ACCEPT'} ? 'accept' : (${result.finalDecision == 'REVIEW'} ? 'review' : 'high-risk')">
+                                        <span class="status-symbol" th:text="${result.finalDecision == 'ACCEPT'} ? '🟢' : (${result.finalDecision == 'REVIEW'} ? '🟡' : '🔴')">🟢</span>
+                                        <span th:text="${result.finalDecision}">ACCEPT</span>
+                                    </span>
+                                </td>
+
+                                <!-- Risk Score -->
+                                <td>
+                                    <span class="score-display" th:text="${result.riskScore != null ? #numbers.formatDecimal(result.riskScore, 1, 1) : '0.0'}">10.0</span>
+                                </td>
+
+                                <!-- Risk Level -->
+                                <td>
+                                    <span class="level-chip"
+                                          th:classappend="${result.riskLevel == 'LOW'} ? 'level-low' : (${result.riskLevel == 'MEDIUM'} ? 'level-medium' : 'level-high')"
+                                          th:text="${result.riskLevel != null ? result.riskLevel : 'LOW'}">LOW</span>
+                                </td>
+
+                                <!-- Approval Confidence -->
+                                <td>
+                                    <span class="signal-metric" th:text="${result.approvalConfidence != null ? #numbers.formatDecimal(result.approvalConfidence, 1, 1) + '%' : 'N/A'}">90.0%</span>
+                                </td>
+
+                                <!-- BM25 Similarity -->
+                                <td>
+                                    <span class="signal-metric" th:text="${result.highestBm25Similarity != null ? #numbers.formatDecimal(result.highestBm25Similarity, 1, 2) : '0.00'}">0.00</span>
+                                    <span class="subtext-match" th:if="${result.topBm25Match != null and !#strings.isEmpty(result.topBm25Match)}" th:text="${result.topBm25Match}">Match</span>
+                                </td>
+
+                                <!-- Fuzzy Similarity -->
+                                <td>
+                                    <span class="signal-metric" th:text="${result.highestFuzzySimilarity != null ? #numbers.formatDecimal(result.highestFuzzySimilarity * 100, 1, 1) + '%' : '0.0%'}">0.0%</span>
+                                    <span class="subtext-match" th:if="${result.topFuzzyMatch != null and !#strings.isEmpty(result.topFuzzyMatch)}" th:text="${result.topFuzzyMatch}">Match</span>
+                                </td>
+
+                                <!-- Phonetic Similarity -->
+                                <td>
+                                    <span class="signal-metric" th:text="${result.highestPhoneticSimilarity != null ? #numbers.formatDecimal(result.highestPhoneticSimilarity * 100, 1, 1) + '%' : '0.0%'}">0.0%</span>
+                                    <span class="subtext-match" th:if="${result.topPhoneticMatch != null and !#strings.isEmpty(result.topPhoneticMatch)}" th:text="${result.topPhoneticMatch}">Match</span>
+                                </td>
+
+                                <!-- Semantic Similarity -->
+                                <td>
+                                    <span class="signal-metric" th:text="${result.highestSemanticSimilarity != null ? #numbers.formatDecimal(result.highestSemanticSimilarity * 100, 1, 1) + '%' : 'N/A'}">N/A</span>
+                                    <span class="subtext-match" th:if="${result.topSemanticMatch != null and !#strings.isEmpty(result.topSemanticMatch)}" th:text="${result.topSemanticMatch}">Match</span>
+                                </td>
+
+                                <!-- Closest Registered Title -->
+                                <td>
+                                    <div class="closest-match-cell" th:text="${result.closestMatch != null and !#strings.isEmpty(result.closestMatch) ? result.closestMatch : 'None'}">
+                                        None
+                                    </div>
+                                </td>
+
+                                <!-- Rule Findings -->
+                                <td>
+                                    <div class="rules-cell" th:with="triggeredList=${result.ruleResults != null ? result.ruleResults.?[triggered] : null}">
+                                        <div th:if="${triggeredList != null and !#lists.isEmpty(triggeredList)}">
+                                            <div th:each="rule : ${triggeredList}">
+                                                <span class="triggered-rule-tag" th:title="${rule.message}" th:text="${rule.ruleName}">Rule</span>
+                                            </div>
+                                        </div>
+                                        <div th:if="${triggeredList == null or #lists.isEmpty(triggeredList)}">
+                                            <span class="badge-compliant">&#10003; Compliant</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- View Full Report -->
+                                <td>
+                                    <a th:href="@{'/analysis/' + ${comparisonDetails.applicationId}}" class="btn-table-action">
+                                        <span>Full Report</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Empty State Handling -->
+        <div th:if="${comparisonDetails == null or comparisonDetails.verificationResults == null or comparisonDetails.verificationResults.isEmpty()}"
+             class="empty-state-card">
+            <div class="empty-icon-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                    stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+            </div>
+            <h2 class="empty-heading">No titles available for comparison</h2>
+            <p class="empty-text">
+                No verification results were found for this application record. You can submit new proposed title options for pre-screening verification from the Application Analyzer.
+            </p>
+            <a th:href="@{/analyze}" href="/analyze" class="btn-primary" style="margin-top: 8px;">
+                Start New Analysis &rarr;
+            </a>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        TitleVerify AI &copy; 2026 &bull; Pre-Submission Approval Copilot
+    </footer>
+
+</body>
+
+</html>
