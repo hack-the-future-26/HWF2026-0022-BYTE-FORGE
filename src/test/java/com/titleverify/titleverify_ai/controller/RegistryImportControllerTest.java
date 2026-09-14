@@ -104,6 +104,60 @@ class RegistryImportControllerTest {
                 .andExpect(content().string(containsString("DEMO_DATA")));
     }
 
+    @Test
+    @DisplayName("GET /registry/import contains dedicated Skipped Duplicates section distinct from Import Errors")
+    void testImportPageContainsSkippedDuplicatesSection() throws Exception {
+        mockMvc.perform(get("/registry/import"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Skipped Duplicates")))
+                .andExpect(content().string(containsString("id=\"duplicatesSection\"")))
+                .andExpect(content().string(containsString("class=\"duplicates-section\"")))
+                .andExpect(content().string(containsString("Import Errors")))
+                .andExpect(content().string(containsString("id=\"errorsSection\"")))
+                .andExpect(content().string(containsString("class=\"errors-section\"")));
+    }
+
+    @Test
+    @DisplayName("POST /registry/import with duplicate-only result preserves summary counts and returns duplicate details")
+    void testDuplicateOnlyResultPreservesCountsAndDetails() throws Exception {
+        String csvContent = "Title,Language\nNamaskar News,Hindi";
+        MockMultipartFile file = new MockMultipartFile("file", "titles.csv", "text/csv", csvContent.getBytes(StandardCharsets.UTF_8));
+
+        RegistryImportResultDto resultDto = new RegistryImportResultDto(10, 9, 1, 0, 0,
+                List.of("Row 2: Title already exists in registry ('Namaskar News')"));
+        when(registryImportService.importCsv(any(MultipartFile.class))).thenReturn(resultDto);
+
+        mockMvc.perform(multipart("/registry/import").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalProcessed").value(10))
+                .andExpect(jsonPath("$.insertedCount").value(9))
+                .andExpect(jsonPath("$.duplicateCount").value(1))
+                .andExpect(jsonPath("$.invalidCount").value(0))
+                .andExpect(jsonPath("$.errorCount").value(0))
+                .andExpect(jsonPath("$.errorDetails[0]").value("Row 2: Title already exists in registry ('Namaskar News')"));
+    }
+
+    @Test
+    @DisplayName("POST /registry/import with actual errors returns error counts and details")
+    void testActualErrorsResultReturnsErrorCountsAndDetails() throws Exception {
+        String csvContent = "Title,Language\nMalformed Quote,English";
+        MockMultipartFile file = new MockMultipartFile("file", "titles.csv", "text/csv", csvContent.getBytes(StandardCharsets.UTF_8));
+
+        RegistryImportResultDto resultDto = new RegistryImportResultDto(5, 3, 0, 1, 1,
+                List.of("Row 4: Malformed CSV row - Unclosed quote", "Row 5: Missing mandatory Title"));
+        when(registryImportService.importCsv(any(MultipartFile.class))).thenReturn(resultDto);
+
+        mockMvc.perform(multipart("/registry/import").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalProcessed").value(5))
+                .andExpect(jsonPath("$.insertedCount").value(3))
+                .andExpect(jsonPath("$.duplicateCount").value(0))
+                .andExpect(jsonPath("$.invalidCount").value(1))
+                .andExpect(jsonPath("$.errorCount").value(1))
+                .andExpect(jsonPath("$.errorDetails[0]").value("Row 4: Malformed CSV row - Unclosed quote"))
+                .andExpect(jsonPath("$.errorDetails[1]").value("Row 5: Missing mandatory Title"));
+    }
+
     // ==========================================
     // POST /registry/import Tests (Step 3 preserved)
     // ==========================================
