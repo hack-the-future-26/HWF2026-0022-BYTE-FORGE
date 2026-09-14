@@ -4,6 +4,7 @@ import com.titleverify.titleverify_ai.dto.ApplicationAnalysisDetailsDto;
 import com.titleverify.titleverify_ai.dto.RuleResultDto;
 import com.titleverify.titleverify_ai.dto.RuleSeverity;
 import com.titleverify.titleverify_ai.dto.TitleVerificationResultDto;
+import com.titleverify.titleverify_ai.dto.VerificationHistoryItemDto;
 import com.titleverify.titleverify_ai.service.PublicationApplicationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,18 @@ class DetailedAnalysisControllerTest {
     }
 
     @Test
+    @DisplayName("GET /analyze and GET / should return 200 OK and render analyzer view")
+    void testShowAnalyzerPage() throws Exception {
+        mockMvc.perform(get("/analyze"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("analyzer"));
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("analyzer"));
+    }
+
+    @Test
     @DisplayName("GET /analysis/{id} should return 200 OK and render detailed_analysis view with real backend model values")
     void testShowDetailedAnalysisPageSuccess() throws Exception {
         Long appId = 100L;
@@ -77,5 +90,21 @@ class DetailedAnalysisControllerTest {
 
         mockMvc.perform(get("/analysis/" + invalidId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /history should return 200 OK and render history view with historyItems")
+    void testShowHistoryPageSuccess() throws Exception {
+        VerificationHistoryItemDto item =
+                new VerificationHistoryItemDto(
+                        1L, LocalDateTime.now(), "Newspaper", "English", "Delhi", "Central", "Daily",
+                        1, List.of("Delhi Chronicle"), "ACCEPT"
+                );
+        when(applicationService.getHistorySummaries()).thenReturn(List.of(item));
+
+        mockMvc.perform(get("/history"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("history"))
+                .andExpect(model().attributeExists("historyItems"));
     }
 }

@@ -39,8 +39,8 @@ public class GeminiEmbeddingService implements EmbeddingService {
                                   String model,
                                   String apiKey) {
         this.normalizationService = normalizationService;
-        this.restClient = restClient;
-        this.model = model;
+        this.restClient = restClient != null ? restClient : RestClient.create();
+        this.model = (model != null && !model.isBlank()) ? model : "gemini-embedding-001";
         String resolvedKey = (apiKey != null && !apiKey.isBlank()) ? apiKey : System.getenv("GEMINI_API_KEY");
         this.apiKey = (resolvedKey != null) ? resolvedKey.trim() : "";
     }

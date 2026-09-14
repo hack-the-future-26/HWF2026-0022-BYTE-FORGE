@@ -33,4 +33,10 @@ public class AnalyzerController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
+
+    @GetMapping("/history")
+    public String showHistoryPage(Model model) {
+        model.addAttribute("historyItems", applicationService.getHistorySummaries());
+        return "history";
+    }
 }

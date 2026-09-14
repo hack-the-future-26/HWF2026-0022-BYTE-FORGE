@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - Verification History</title>
+    <meta name="description" content="Review previous title verification applications, clearance status, and detailed compliance analysis reports.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/analyzer.css}" href="/css/analyzer.css">
+    <link rel="stylesheet" th:href="@{/css/detailed_analysis.css}" href="/css/detailed_analysis.css">
+
+    <style>
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .history-card {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .history-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .history-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .history-id-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-id-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            letter-spacing: 0.2px;
+        }
+
+        .history-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .history-meta-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .meta-item {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .meta-label {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .meta-value {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .history-titles-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .titles-heading {
+            font-size: 12.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+        }
+
+        .history-titles-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .history-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14.5px;
+            background-color: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+        }
+
+        .title-option-tag {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #eff6ff;
+            color: var(--primary-blue);
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.4px;
+            flex-shrink: 0;
+        }
+
+        .title-name {
+            font-weight: 700;
+            color: var(--text-main);
+            word-break: break-word;
+        }
+
+        .history-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-top: 8px;
+        }
+
+        .btn-view-analysis {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            font-size: 13.5px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-view-analysis:hover {
+            background-color: var(--primary-blue-hover);
+            transform: translateX(2px);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        .empty-state-card {
+            text-align: center;
+            padding: 64px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .empty-icon-circle {
+            width: 72px;
+            height: 72px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-light);
+        }
+
+        .empty-heading {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.4px;
+        }
+
+        .empty-text {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 480px;
+            line-height: 1.6;
+        }
+
+        .btn-new-analysis {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-new-analysis:hover {
+            background-color: var(--primary-blue-hover);
+        }
+
+        .summary-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .summary-count-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link">Application Analyzer</a>
+                <a th:href="@{/headline-generator}" href="/headline-generator" class="nav-link">AI Headline Generator</a>
+                <a th:href="@{/history}" href="/history" class="nav-link active" aria-current="page">Verification History</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-wrapper">
+
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Verification Archives
+            </div>
+            <h1 class="hero-heading">Title Verification History</h1>
+            <p class="hero-subtext">
+                Review your previous title verification applications, examine overall verification decisions, and open detailed compliance analysis reports.
+            </p>
+        </section>
+
+        <div th:if="${historyItems != null and !historyItems.isEmpty()}">
+            <div class="summary-header-row">
+                <span class="summary-count-text" th:text="${historyItems.size()} + ' Application(s) Recorded'">1 Application(s) Recorded</span>
+                <a th:href="@{/analyze}" href="/analyze" class="btn-new-analysis">+ New Verification</a>
+            </div>
+
+            <div class="history-list">
+                <div th:each="item : ${historyItems}" class="analyzer-card history-card">
+                    <div class="history-card-header">
+                        <div class="history-id-group">
+                            <span class="app-id-badge" th:text="'Application #' + ${item.applicationId}">Application #1</span>
+                            <span class="history-date">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span th:text="${item.formattedCreatedAt}">14 Sep 2026, 02:30 PM</span>
+                            </span>
+                        </div>
+
+                        <span class="badge-decision"
+                              th:classappend="${item.overallDecision == 'ACCEPT'} ? 'accept' : (${item.overallDecision == 'REVIEW'} ? 'review' : 'high-risk')">
+                            <span class="status-symbol" th:text="${item.overallDecision == 'ACCEPT'} ? '🟢' : (${item.overallDecision == 'REVIEW'} ? '🟡' : '🔴')">🟢</span>
+                            <span th:text="${item.overallDecision}">ACCEPT</span>
+                        </span>
+                    </div>
+
+                    <div class="history-meta-grid">
+                        <div class="meta-item">
+                            <span class="meta-label">Type:</span>
+                            <span class="meta-value" th:text="${item.publicationType}">Newspaper</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Language:</span>
+                            <span class="meta-value" th:text="${item.language}">English</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Location:</span>
+                            <span class="meta-value" th:text="${item.state} + ' (' + ${item.district} + ')'">Delhi (Central)</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Periodicity:</span>
+                            <span class="meta-value" th:text="${item.periodicity}">Daily</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Titles Submitted:</span>
+                            <span class="meta-value" th:text="${item.titleCount}">1</span>
+                        </div>
+                    </div>
+
+                    <div class="history-titles-section">
+                        <div class="titles-heading">Proposed Titles:</div>
+                        <ul class="history-titles-list">
+                            <li th:each="title, iterStat : ${item.proposedTitles}" class="history-title-row">
+                                <span class="title-option-tag" th:text="'Option ' + ${iterStat.index + 1}">Option 1</span>
+                                <span class="title-name" th:text="${title}">Proposed Title Name</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="history-card-footer">
+                        <a th:href="@{'/analysis/' + ${item.applicationId}}" class="btn-view-analysis">
+                            <span>View Analysis</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${historyItems == null or historyItems.isEmpty()}" class="analyzer-card empty-state-card">
+            <div class="empty-icon-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                    stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <h2 class="empty-heading">No Verification History Yet</h2>
+            <p class="empty-text">
+                You haven't submitted any title verification applications yet. Once you submit title options for analysis, your verification records and detailed clearance reports will appear here.
+            </p>
+            <a th:href="@{/analyze}" href="/analyze" class="btn-primary" style="margin-top: 8px;">
+                Start New Analysis &rarr;
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="app-footer">
+        TitleVerify AI &copy; 2026 &bull; Pre-Submission Approval Copilot
+    </footer>
+
+</body>
+
+</html>

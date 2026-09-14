@@ -4,6 +4,7 @@ import com.titleverify.titleverify_ai.dto.ApplicationAnalysisDetailsDto;
 import com.titleverify.titleverify_ai.dto.ApplicationRequestDto;
 import com.titleverify.titleverify_ai.dto.ApplicationResponseDto;
 import com.titleverify.titleverify_ai.dto.TitleVerificationResultDto;
+import com.titleverify.titleverify_ai.dto.VerificationHistoryItemDto;
 import com.titleverify.titleverify_ai.entity.PublicationApplication;
 import com.titleverify.titleverify_ai.entity.ProposedTitle;
 import com.titleverify.titleverify_ai.repository.PublicationApplicationRepository;
@@ -45,7 +46,6 @@ public class PublicationApplicationService {
             if (!titleText.isEmpty()) {
                 ProposedTitle proposedTitle = new ProposedTitle(titleText, i + 1);
 
-                // Perform verification for proposed title with application context
                 TitleVerificationResultDto verificationResult = verificationService.verifyProposedTitle(
                         titleText,
                         application.getPublicationType(),
@@ -56,7 +56,6 @@ public class PublicationApplicationService {
                 );
                 verificationResults.add(verificationResult);
 
-                // Store verification outcomes on the entity
                 proposedTitle.setNormalizedTitle(verificationResult.getNormalizedTitle());
                 proposedTitle.setExactMatch(verificationResult.isExactMatch());
                 proposedTitle.setMatchedTitle(verificationResult.getMatchedTitle());
@@ -126,6 +125,68 @@ public class PublicationApplicationService {
                 reviewCount,
                 highRiskCount
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<VerificationHistoryItemDto> getHistorySummaries() {
+        List<PublicationApplication> applications = applicationRepository.findAllByOrderByCreatedAtDesc();
+        List<VerificationHistoryItemDto> historyList = new ArrayList<>();
+
+        for (PublicationApplication app : applications) {
+            List<String> titles = new ArrayList<>();
+            int lowRisk = 0;
+            int review = 0;
+            int highRisk = 0;
+
+            for (ProposedTitle pt : app.getProposedTitles()) {
+                if (pt.getTitle() != null && !pt.getTitle().trim().isEmpty()) {
+                    titles.add(pt.getTitle().trim());
+
+                    TitleVerificationResultDto result = verificationService.verifyProposedTitle(
+                            pt.getTitle().trim(),
+                            app.getPublicationType(),
+                            app.getLanguage(),
+                            app.getState(),
+                            app.getDistrict(),
+                            app.getPeriodicity()
+                    );
+
+                    if ("ACCEPT".equalsIgnoreCase(result.getFinalDecision())) {
+                        lowRisk++;
+                    } else if ("REVIEW".equalsIgnoreCase(result.getFinalDecision())) {
+                        review++;
+                    } else {
+                        highRisk++;
+                    }
+                }
+            }
+
+            String overallDecision;
+            if (highRisk > 0) {
+                overallDecision = "HIGH RISK";
+            } else if (review > 0) {
+                overallDecision = "REVIEW";
+            } else if (lowRisk > 0) {
+                overallDecision = "ACCEPT";
+            } else {
+                overallDecision = "PENDING";
+            }
+
+            historyList.add(new VerificationHistoryItemDto(
+                    app.getId(),
+                    app.getCreatedAt(),
+                    app.getPublicationType(),
+                    app.getLanguage(),
+                    app.getState(),
+                    app.getDistrict(),
+                    app.getPeriodicity(),
+                    titles.size(),
+                    titles,
+                    overallDecision
+            ));
+        }
+
+        return historyList;
     }
 
     private void validateRequest(ApplicationRequestDto dto) {

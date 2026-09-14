@@ -10,6 +10,8 @@ public class CandidateMatchDto {
     private String phoneticSimilarityLevel;
     private Double semanticSimilarityScore;
     private String semanticSimilarityLevel;
+    private Double bm25SimilarityScore;
+    private String bm25SimilarityLevel;
 
     public CandidateMatchDto() {
     }
@@ -34,6 +36,15 @@ public class CandidateMatchDto {
     public CandidateMatchDto(String candidateTitle, String normalizedCandidateTitle, double similarityScore, String similarityLevel,
                              double phoneticSimilarityScore, String phoneticSimilarityLevel,
                              Double semanticSimilarityScore, String semanticSimilarityLevel) {
+        this(candidateTitle, normalizedCandidateTitle, similarityScore, similarityLevel,
+             phoneticSimilarityScore, phoneticSimilarityLevel, semanticSimilarityScore, semanticSimilarityLevel,
+             null, null);
+    }
+
+    public CandidateMatchDto(String candidateTitle, String normalizedCandidateTitle, double similarityScore, String similarityLevel,
+                             double phoneticSimilarityScore, String phoneticSimilarityLevel,
+                             Double semanticSimilarityScore, String semanticSimilarityLevel,
+                             Double bm25SimilarityScore, String bm25SimilarityLevel) {
         this.candidateTitle = candidateTitle;
         this.normalizedCandidateTitle = normalizedCandidateTitle;
         this.similarityScore = similarityScore;
@@ -42,6 +53,8 @@ public class CandidateMatchDto {
         this.phoneticSimilarityLevel = phoneticSimilarityLevel;
         this.semanticSimilarityScore = semanticSimilarityScore;
         this.semanticSimilarityLevel = semanticSimilarityLevel;
+        this.bm25SimilarityScore = bm25SimilarityScore;
+        this.bm25SimilarityLevel = bm25SimilarityLevel;
     }
 
     public String getCandidateTitle() {
@@ -106,5 +119,21 @@ public class CandidateMatchDto {
 
     public void setSemanticSimilarityLevel(String semanticSimilarityLevel) {
         this.semanticSimilarityLevel = semanticSimilarityLevel;
+    }
+
+    public Double getBm25SimilarityScore() {
+        return bm25SimilarityScore;
+    }
+
+    public void setBm25SimilarityScore(Double bm25SimilarityScore) {
+        this.bm25SimilarityScore = bm25SimilarityScore;
+    }
+
+    public String getBm25SimilarityLevel() {
+        return bm25SimilarityLevel;
+    }
+
+    public void setBm25SimilarityLevel(String bm25SimilarityLevel) {
+        this.bm25SimilarityLevel = bm25SimilarityLevel;
     }
 }

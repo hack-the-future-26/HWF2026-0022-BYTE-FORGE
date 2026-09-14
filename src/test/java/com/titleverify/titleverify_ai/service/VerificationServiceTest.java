@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class VerificationServiceTest {
@@ -121,5 +122,125 @@ class VerificationServiceTest {
         assertNotNull(result.getApprovalConfidence());
         assertNotNull(result.getReasons());
         assertNotNull(result.getRecommendation());
+    }
+
+    @Test
+    @DisplayName("Should properly reject empty, blank, or null title inputs with HIGH RISK decision and INVALID_TITLE_INPUT stage")
+    void testVerifyProposedTitle_NullAndEmptyInput() {
+        // Null title
+        TitleVerificationResultDto resultNull = verificationService.verifyProposedTitle(null);
+        assertNotNull(resultNull);
+        assertEquals("HIGH RISK", resultNull.getFinalDecision());
+        assertEquals(100.0, resultNull.getRiskScore());
+        assertEquals("INVALID_TITLE_INPUT", resultNull.getDecisionStage());
+        assertEquals(0.0, resultNull.getApprovalConfidence());
+        assertFalse(resultNull.getReasons().isEmpty());
+        assertNotNull(resultNull.getRecommendation());
+
+        // Empty string title
+        TitleVerificationResultDto resultEmpty = verificationService.verifyProposedTitle("");
+        assertNotNull(resultEmpty);
+        assertEquals("HIGH RISK", resultEmpty.getFinalDecision());
+        assertEquals(100.0, resultEmpty.getRiskScore());
+        assertEquals("INVALID_TITLE_INPUT", resultEmpty.getDecisionStage());
+
+        // Whitespace string title
+        TitleVerificationResultDto resultWhitespace = verificationService.verifyProposedTitle("    ");
+        assertNotNull(resultWhitespace);
+        assertEquals("HIGH RISK", resultWhitespace.getFinalDecision());
+        assertEquals(100.0, resultWhitespace.getRiskScore());
+        assertEquals("INVALID_TITLE_INPUT", resultWhitespace.getDecisionStage());
+    }
+
+    @Test
+    @DisplayName("Should properly reject symbol-only titles (e.g. !@#$%) with HIGH RISK decision")
+    void testVerifyProposedTitle_SymbolOnlyInput() {
+        TitleVerificationResultDto result = verificationService.verifyProposedTitle("!@#$%^&*");
+        assertNotNull(result);
+        assertEquals("HIGH RISK", result.getFinalDecision());
+        assertEquals(100.0, result.getRiskScore());
+        assertEquals("INVALID_TITLE_INPUT", result.getDecisionStage());
+        assertEquals(0.0, result.getApprovalConfidence());
+        assertTrue(result.getReasons().stream().anyMatch(r -> r.contains("alphanumeric")));
+    }
+
+    @Test
+    @DisplayName("Should gracefully handle Gemini API / semantic failure without crashing")
+    void testVerifyProposedTitle_GeminiSemanticFailureGracefullyHandled() {
+        SemanticSimilarityService mockSemantic = Mockito.mock(SemanticSimilarityService.class);
+        when(mockSemantic.calculateSemanticSimilarity(any(), any())).thenThrow(new RuntimeException("Gemini quota exceeded / network timeout"));
+
+        VerificationService serviceWithFailingSemantic = new VerificationService(
+                normalizationService, exactMatchService, candidateRetrievalService,
+                fuzzySimilarityService, phoneticSimilarityService, mockSemantic,
+                ruleEngineService, riskScoringService, decisionEngineService, decisionExplanationService
+        );
+
+        String proposed = "Morning Chronicle";
+        String normalizedProposed = "morning chronicle";
+
+        RegisteredPublicationTitle candidate = new RegisteredPublicationTitle(
+                "Daily Morning", "daily morning", "English", "Delhi", "Daily", "Newspaper", "DEMO_DATA"
+        );
+
+        when(exactMatchService.findExactMatch(normalizedProposed)).thenReturn(Optional.empty());
+        when(candidateRetrievalService.retrieveCandidates(normalizedProposed)).thenReturn(List.of(candidate));
+
+        TitleVerificationResultDto result = serviceWithFailingSemantic.verifyProposedTitle(proposed);
+
+        assertNotNull(result);
+        assertFalse(result.isExactMatch());
+        assertNull(result.getHighestSemanticSimilarity(), "Highest semantic similarity should be null when Gemini fails");
+        assertEquals("UNAVAILABLE", result.getCandidateMatches().get(0).getSemanticSimilarityLevel());
+        assertNotNull(result.getFinalDecision(), "Decision engine should still produce a decision");
+        assertNotNull(result.getRiskScore());
+    }
+
+    @Test
+    @DisplayName("Should populate BM25 score and level on candidate matches and compute highestBm25Similarity")
+    void testVerifyProposedTitle_Bm25MultiSignalPopulated() {
+        String proposed = "Karnataka Herald";
+        String normalizedProposed = "karnataka herald";
+
+        RegisteredPublicationTitle candidate1 = new RegisteredPublicationTitle(
+                "Karnataka Daily", "karnataka daily", "English", "Karnataka", "Daily", "Newspaper", "DEMO_DATA"
+        );
+        RegisteredPublicationTitle candidate2 = new RegisteredPublicationTitle(
+                "Delhi Herald", "delhi herald", "English", "Delhi", "Daily", "Newspaper", "DEMO_DATA"
+        );
+
+        when(exactMatchService.findExactMatch(normalizedProposed)).thenReturn(Optional.empty());
+        when(candidateRetrievalService.retrieveCandidates(normalizedProposed)).thenReturn(List.of(candidate1, candidate2));
+
+        TitleVerificationResultDto result = verificationService.verifyProposedTitle(proposed);
+
+        assertNotNull(result);
+        assertFalse(result.isExactMatch());
+        assertNotNull(result.getCandidateMatches());
+        assertEquals(2, result.getCandidateMatches().size());
+
+        for (var match : result.getCandidateMatches()) {
+            assertNotNull(match.getBm25SimilarityScore(), "BM25 score must be populated");
+            assertNotNull(match.getBm25SimilarityLevel(), "BM25 level must be populated");
+            assertTrue(match.getBm25SimilarityScore() > 0.0, "Word overlap should produce BM25 score > 0");
+        }
+
+        assertNotNull(result.getHighestBm25Similarity(), "Highest BM25 similarity must be populated");
+        assertTrue(result.getHighestBm25Similarity() > 0.0);
+        assertNotNull(result.getTopBm25Match(), "Top BM25 match title must be populated");
+    }
+
+    @Test
+    @DisplayName("Should gracefully handle candidate retrieval database failure without crashing")
+    void testVerifyProposedTitle_CandidateRetrievalDatabaseFailureHandled() {
+        when(exactMatchService.findExactMatch("bengaluru observer")).thenReturn(Optional.empty());
+        when(candidateRetrievalService.retrieveCandidates("bengaluru observer")).thenThrow(new RuntimeException("Database connection down"));
+
+        TitleVerificationResultDto result = verificationService.verifyProposedTitle("Bengaluru Observer");
+
+        assertNotNull(result);
+        assertNotNull(result.getFinalDecision());
+        assertEquals("REVIEW", result.getFinalDecision(), "Degraded verification should yield REVIEW decision");
+        assertEquals("VERIFICATION_DEGRADED", result.getDecisionStage());
     }
 }
