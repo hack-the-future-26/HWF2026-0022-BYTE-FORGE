@@ -100,7 +100,9 @@ class HistoryPageIntegrationTest {
                 .andExpect(content().string(containsString("Mumbai Herald")))
                 .andExpect(content().string(containsString("Bombay Mirror")))
                 .andExpect(content().string(containsString("/analysis/42")))
-                .andExpect(content().string(containsString("/comparison/42")));
+                .andExpect(content().string(containsString("/comparison/42")))
+                .andExpect(content().string(containsString("/report/42/download")))
+                .andExpect(content().string(containsString("Download PDF Report")));
     }
 
     @Test
@@ -128,7 +130,9 @@ class HistoryPageIntegrationTest {
                 .andExpect(content().string(containsString("Detailed Verification Report")))
                 .andExpect(content().string(containsString("Mumbai Herald")))
                 .andExpect(content().string(containsString("Verification History")))
-                .andExpect(content().string(containsString("/comparison/42")));
+                .andExpect(content().string(containsString("/comparison/42")))
+                .andExpect(content().string(containsString("/report/42/download")))
+                .andExpect(content().string(containsString("Download PDF Report")));
     }
 
     @Test
@@ -174,7 +178,9 @@ class HistoryPageIntegrationTest {
                 .andExpect(content().string(containsString("Bombay Mirror")))
                 .andExpect(content().string(containsString("Option #1")))
                 .andExpect(content().string(containsString("Option #2")))
-                .andExpect(content().string(containsString("/analysis/42")));
+                .andExpect(content().string(containsString("/analysis/42")))
+                .andExpect(content().string(containsString("/report/42/download")))
+                .andExpect(content().string(containsString("Download PDF Report")));
     }
 
     @Test
