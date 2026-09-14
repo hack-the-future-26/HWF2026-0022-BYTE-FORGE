@@ -14,6 +14,8 @@ public interface RegisteredPublicationTitleRepository extends JpaRepository<Regi
 
     Optional<RegisteredPublicationTitle> findByNormalizedTitle(String normalizedTitle);
 
+    boolean existsByNormalizedTitle(String normalizedTitle);
+
     List<RegisteredPublicationTitle> findByNormalizedTitleContaining(String normalizedTitleFragment);
 
     @Query("SELECT r FROM RegisteredPublicationTitle r WHERE LOWER(r.normalizedTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))")

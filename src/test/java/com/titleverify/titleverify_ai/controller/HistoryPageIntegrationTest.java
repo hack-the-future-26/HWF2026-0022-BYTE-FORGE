@@ -201,4 +201,20 @@ class HistoryPageIntegrationTest {
                 .andExpect(content().string(containsString("No titles available for comparison")))
                 .andExpect(content().string(containsString("Start New Analysis")));
     }
+
+    @Test
+    @DisplayName("Navigation headers in templates should contain Import Titles link pointing to /registry/import")
+    void testNavigationContainsImportTitlesLink() throws Exception {
+        when(applicationService.getHistorySummaries()).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/analyze"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Import Titles")))
+                .andExpect(content().string(containsString("/registry/import")));
+
+        mockMvc.perform(get("/history"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Import Titles")))
+                .andExpect(content().string(containsString("/registry/import")));
+    }
 }
