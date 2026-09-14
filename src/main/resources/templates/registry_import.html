@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TitleVerify AI - Registered Title Import</title>
+    <meta name="description"
+        content="Import registered publication titles from a CSV file into the TitleVerify registry.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/registry_import.css}" href="/css/registry_import.css">
+</head>
+
+<body>
+
+    <!-- Deep Navy Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title-group">
+                    <span class="brand-name">TitleVerify AI</span>
+                    <span class="brand-subtitle">Pre-Submission Approval Copilot</span>
+                </div>
+            </div>
+            <nav class="header-nav" aria-label="Main Navigation">
+                <a th:href="@{/analyze}" href="/analyze" class="nav-link">Application Analyzer</a>
+                <a th:href="@{/headline-generator}" href="/headline-generator" class="nav-link">AI Headline Generator</a>
+                <a th:href="@{/history}" href="/history" class="nav-link">Verification History</a>
+                <a th:href="@{/registry/import}" href="/registry/import" class="nav-link active" aria-current="page">Import Titles</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Registry Management
+            </div>
+            <h1 class="hero-heading">Registered Title Import</h1>
+            <p class="hero-subtext">Import registered publication titles from a CSV file into the TitleVerify registry.</p>
+        </section>
+
+        <!-- Notice Banner -->
+        <div class="notice-card" role="note">
+            <div class="notice-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+            <div class="notice-body">
+                <strong>Registry Ingestion Policy:</strong> All newly imported records are assigned the status <strong>IMPORTED</strong> and immediately synchronized into the in-memory BM25 search corpus. Existing <strong>DEMO_DATA</strong> records are strictly preserved and never overwritten.
+            </div>
+        </div>
+
+        <!-- Import Card -->
+        <section class="import-card" aria-labelledby="upload-section-title">
+            <h2 id="upload-section-title" class="import-card-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                Upload CSV Dataset
+            </h2>
+
+            <!-- CSV Format Reference -->
+            <div class="format-box">
+                <div class="format-box-title">Expected CSV Columns</div>
+                <div class="format-code">Title,Language,State,Periodicity,Publication Type</div>
+                <div class="format-box-title" style="margin-top: 10px;">Example:</div>
+                <div class="format-code">Karnataka Morning,English,Karnataka,Daily,Newspaper</div>
+                <p class="format-note">
+                    <strong>Note:</strong> <code>Title</code> is mandatory. <code>Language</code>, <code>State</code>, <code>Periodicity</code>, and <code>Publication Type</code> are optional.
+                </p>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="importForm" enctype="multipart/form-data">
+                <div class="upload-dropzone" id="dropzone">
+                    <input type="file" id="file" name="file" accept=".csv,text/csv" class="upload-file-input" required>
+                    <div class="upload-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="upload-text-main">Choose a CSV file or drag and drop it here</div>
+                    <div class="upload-text-sub">Supports .csv files formatted according to the schema above</div>
+                </div>
+
+                <!-- Selected File Display -->
+                <div class="selected-file-display" id="fileDisplay">
+                    <div class="selected-file-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <span id="fileName">titles.csv</span>
+                        <span id="fileSize" class="selected-file-size">(0 KB)</span>
+                    </div>
+                    <button type="button" class="btn-remove-file" id="btnRemoveFile">Remove</button>
+                </div>
+
+                <!-- Alert Messages -->
+                <div id="alertSuccess" class="alert-box alert-success" role="alert"></div>
+                <div id="alertError" class="alert-box alert-error" role="alert"></div>
+
+                <!-- Action Row -->
+                <div class="action-row">
+                    <button type="submit" class="btn-import" id="btnImport">
+                        <span class="spinner" id="importSpinner"></span>
+                        <span id="btnImportText">Import Titles</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Results Card -->
+        <section class="results-card" id="resultsCard" aria-labelledby="results-card-title">
+            <div class="results-header">
+                <h2 id="results-card-title" class="results-title">Import Summary</h2>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card highlight-blue">
+                    <div class="metric-value" id="statTotalProcessed">0</div>
+                    <div class="metric-label">Total Processed</div>
+                </div>
+                <div class="metric-card highlight-green">
+                    <div class="metric-value" id="statInserted">0</div>
+                    <div class="metric-label">Imported</div>
+                </div>
+                <div class="metric-card highlight-amber">
+                    <div class="metric-value" id="statDuplicates">0</div>
+                    <div class="metric-label">Duplicates Skipped</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="statInvalid">0</div>
+                    <div class="metric-label">Invalid Rows</div>
+                </div>
+                <div class="metric-card highlight-red">
+                    <div class="metric-value" id="statErrors">0</div>
+                    <div class="metric-label">Errors</div>
+                </div>
+            </div>
+
+            <!-- Error Details Section -->
+            <div class="errors-section" id="errorsSection">
+                <h3 class="errors-heading">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Import Errors
+                </h3>
+                <ul class="errors-list" id="errorsList"></ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 TitleVerify AI. Automated Title Verification & Regulatory Feasibility Platform.</p>
+    </footer>
+
+    <!-- Client Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('importForm');
+            const fileInput = document.getElementById('file');
+            const dropzone = document.getElementById('dropzone');
+            const fileDisplay = document.getElementById('fileDisplay');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const btnRemoveFile = document.getElementById('btnRemoveFile');
+            const btnImport = document.getElementById('btnImport');
+            const btnImportText = document.getElementById('btnImportText');
+            const importSpinner = document.getElementById('importSpinner');
+            const alertSuccess = document.getElementById('alertSuccess');
+            const alertError = document.getElementById('alertError');
+
+            const resultsCard = document.getElementById('resultsCard');
+            const statTotalProcessed = document.getElementById('statTotalProcessed');
+            const statInserted = document.getElementById('statInserted');
+            const statDuplicates = document.getElementById('statDuplicates');
+            const statInvalid = document.getElementById('statInvalid');
+            const statErrors = document.getElementById('statErrors');
+            const errorsSection = document.getElementById('errorsSection');
+            const errorsList = document.getElementById('errorsList');
+
+            // Format helper for file size
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            // Update UI on file selection
+            function handleFileSelect(file) {
+                if (!file) return;
+                fileName.textContent = file.name;
+                fileSize.textContent = '(' + formatBytes(file.size) + ')';
+                fileDisplay.style.display = 'flex';
+                dropzone.style.display = 'none';
+                hideAlerts();
+            }
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            btnRemoveFile.addEventListener('click', () => {
+                fileInput.value = '';
+                fileDisplay.style.display = 'none';
+                dropzone.style.display = 'block';
+                hideAlerts();
+            });
+
+            // Drag and Drop
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            function hideAlerts() {
+                alertSuccess.style.display = 'none';
+                alertError.style.display = 'none';
+            }
+
+            function showSuccess(msg) {
+                alertSuccess.textContent = msg;
+                alertSuccess.style.display = 'block';
+                alertError.style.display = 'none';
+            }
+
+            function showError(msg) {
+                alertError.textContent = msg;
+                alertError.style.display = 'block';
+                alertSuccess.style.display = 'none';
+            }
+
+            // Form Submit handler
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideAlerts();
+
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    showError('Please select a CSV file to import.');
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Set loading state
+                btnImport.disabled = true;
+                btnImportText.textContent = 'Importing Titles...';
+                importSpinner.style.display = 'inline-block';
+
+                try {
+                    const response = await fetch('/registry/import', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showSuccess(`Import completed successfully. Processed ${data.totalProcessed} records (${data.insertedCount} new titles added, ${data.duplicateCount} duplicates skipped).`);
+                        
+                        // Populate results summary
+                        statTotalProcessed.textContent = data.totalProcessed != null ? data.totalProcessed : 0;
+                        statInserted.textContent = data.insertedCount != null ? data.insertedCount : 0;
+                        statDuplicates.textContent = data.duplicateCount != null ? data.duplicateCount : 0;
+                        statInvalid.textContent = data.invalidCount != null ? data.invalidCount : 0;
+                        statErrors.textContent = data.errorCount != null ? data.errorCount : 0;
+
+                        // Errors list
+                        errorsList.innerHTML = '';
+                        if (data.errorDetails && data.errorDetails.length > 0) {
+                            data.errorDetails.forEach(err => {
+                                const li = document.createElement('li');
+                                li.className = 'errors-list-item';
+                                li.textContent = err;
+                                errorsList.appendChild(li);
+                            });
+                            errorsSection.style.display = 'block';
+                        } else {
+                            errorsSection.style.display = 'none';
+                        }
+
+                        resultsCard.style.display = 'block';
+                        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        const errMsg = (data && data.errorDetails && data.errorDetails.length > 0)
+                            ? data.errorDetails[0]
+                            : 'Upload failed with status ' + response.status;
+                        showError(errMsg);
+                    }
+                } catch (err) {
+                    showError('Network or server communication error: ' + err.message);
+                } finally {
+                    btnImport.disabled = false;
+                    btnImportText.textContent = 'Import Titles';
+                    importSpinner.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
