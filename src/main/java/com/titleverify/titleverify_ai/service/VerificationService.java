@@ -3,17 +3,22 @@ package com.titleverify.titleverify_ai.service;
 import com.titleverify.titleverify_ai.dto.*;
 import com.titleverify.titleverify_ai.entity.RegisteredPublicationTitle;
 import com.titleverify.titleverify_ai.rule.RuleEngineInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 
 @Service
 public class VerificationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(VerificationService.class);
 
     private final TitleNormalizationService normalizationService;
     private final ExactMatchService exactMatchService;
@@ -58,154 +63,235 @@ public class VerificationService {
                                                           String state,
                                                           String district,
                                                           String periodicity) {
-        String normalizedProposed = normalizationService.normalize(proposedTitle);
+        String normalizedProposed = normalizationService != null ? normalizationService.normalize(proposedTitle) : "";
 
-        // Stage 1: Exact Match Check
-        Optional<RegisteredPublicationTitle> exactMatchOpt = exactMatchService.findExactMatch(normalizedProposed);
+        // Check for empty, blank, or invalid title inputs lacking alphanumeric characters
+        if (proposedTitle == null || proposedTitle.trim().isEmpty() || normalizedProposed.isEmpty()) {
+            String displayTitle = (proposedTitle != null) ? proposedTitle : "";
+            String invalidReason = (proposedTitle == null || proposedTitle.trim().isEmpty())
+                    ? "Proposed title is empty or contains no characters."
+                    : "Proposed title '" + proposedTitle + "' contains no valid alphanumeric characters in any supported language.";
+            String recommendation = "Please provide a valid publication title containing alphabetic or alphanumeric characters.";
 
-        boolean isExactMatch = exactMatchOpt.isPresent();
-        String matchedTitle = isExactMatch ? exactMatchOpt.get().getTitle() : null;
-        String decisionStage = isExactMatch ? "EXACT_MATCH_FOUND" : "CANDIDATE_SIMILARITY_ANALYSIS";
-
-        // Stage 2: Candidate Retrieval
-        List<RegisteredPublicationTitle> candidateEntities = candidateRetrievalService.retrieveCandidates(normalizedProposed);
-
-        // Stage 3: Multi-Signal Similarity Analysis (Fuzzy + Phonetic + REAL Gemini Semantic)
-        List<CandidateMatchDto> candidateMatches = new ArrayList<>();
-        for (RegisteredPublicationTitle candidate : candidateEntities) {
-            String candidateNorm = candidate.getNormalizedTitle();
-            if (candidateNorm == null || candidateNorm.isEmpty()) {
-                candidateNorm = normalizationService.normalize(candidate.getTitle());
-            }
-
-            // 1. Fuzzy Levenshtein Similarity
-            double fuzzyScore = fuzzySimilarityService.calculateSimilarity(normalizedProposed, candidateNorm);
-            String fuzzyLevel = fuzzySimilarityService.classifySimilarityLevel(fuzzyScore);
-
-            // 2. Phonetic Metaphone Similarity
-            double phoneticScore = phoneticSimilarityService.calculatePhoneticSimilarity(proposedTitle, candidate.getTitle());
-            String phoneticLevel = phoneticSimilarityService.classifyPhoneticLevel(phoneticScore);
-
-            // 3. Semantic Vector Cosine Similarity (Real Gemini API Integration)
-            Double semanticScore = null;
-            String semanticLevel = "UNAVAILABLE";
-            OptionalDouble semOpt = semanticSimilarityService.calculateSemanticSimilarity(proposedTitle, candidate.getTitle());
-            if (semOpt.isPresent()) {
-                semanticScore = semOpt.getAsDouble();
-                semanticLevel = semanticSimilarityService.classifySemanticLevel(semanticScore);
-            }
-
-            candidateMatches.add(new CandidateMatchDto(
-                    candidate.getTitle(),
-                    candidateNorm,
-                    fuzzyScore,
-                    fuzzyLevel,
-                    phoneticScore,
-                    phoneticLevel,
-                    semanticScore,
-                    semanticLevel
+            List<RuleResultDto> validationRules = List.of(new RuleResultDto(
+                    "TITLE_FORMAT_VALIDATION",
+                    "Title Format Validation",
+                    RuleSeverity.HIGH,
+                    true,
+                    invalidReason,
+                    displayTitle,
+                    recommendation
             ));
+
+            return new TitleVerificationResultDto(
+                    displayTitle,
+                    normalizedProposed,
+                    false,
+                    null,
+                    List.of(),
+                    "INVALID_TITLE_INPUT",
+                    List.of(),
+                    0.0,
+                    null,
+                    0.0,
+                    null,
+                    null,
+                    null,
+                    validationRules,
+                    VerificationDecision.HIGH_RISK.getCode(),
+                    100.0,
+                    "HIGH RISK",
+                    0.0,
+                    null,
+                    List.of(invalidReason),
+                    recommendation
+            );
         }
 
-        // Rank candidates by highest peak multi-signal score (max of fuzzy, phonetic, or semantic)
-        candidateMatches.sort(Comparator.comparingDouble((CandidateMatchDto c) -> {
-            double maxScore = Math.max(c.getSimilarityScore(), c.getPhoneticSimilarityScore());
-            if (c.getSemanticSimilarityScore() != null) {
-                maxScore = Math.max(maxScore, c.getSemanticSimilarityScore());
+        try {
+            // Stage 1: Exact Match Check
+            Optional<RegisteredPublicationTitle> exactMatchOpt = exactMatchService != null
+                    ? exactMatchService.findExactMatch(normalizedProposed)
+                    : Optional.empty();
+
+            boolean isExactMatch = exactMatchOpt.isPresent();
+            String matchedTitle = isExactMatch ? exactMatchOpt.get().getTitle() : null;
+            String decisionStage = isExactMatch ? "EXACT_MATCH_FOUND" : "CANDIDATE_SIMILARITY_ANALYSIS";
+
+            // Stage 2: Candidate Retrieval
+            List<RegisteredPublicationTitle> candidateEntities = candidateRetrievalService != null
+                    ? candidateRetrievalService.retrieveCandidates(normalizedProposed)
+                    : new ArrayList<>();
+
+            // Stage 3: Multi-Signal Similarity Analysis (Fuzzy + Phonetic + Semantic)
+            List<CandidateMatchDto> candidateMatches = new ArrayList<>();
+            for (RegisteredPublicationTitle candidate : candidateEntities) {
+                if (candidate == null) continue;
+                String candidateTitle = candidate.getTitle() != null ? candidate.getTitle() : "";
+                String candidateNorm = candidate.getNormalizedTitle();
+                if (candidateNorm == null || candidateNorm.isEmpty()) {
+                    candidateNorm = normalizationService != null ? normalizationService.normalize(candidateTitle) : candidateTitle.toLowerCase();
+                }
+
+                // 1. Fuzzy Levenshtein Similarity
+                double fuzzyScore = fuzzySimilarityService != null ? fuzzySimilarityService.calculateSimilarity(normalizedProposed, candidateNorm) : 0.0;
+                String fuzzyLevel = fuzzySimilarityService != null ? fuzzySimilarityService.classifySimilarityLevel(fuzzyScore) : "LOW";
+
+                // 2. Phonetic Metaphone Similarity
+                double phoneticScore = phoneticSimilarityService != null ? phoneticSimilarityService.calculatePhoneticSimilarity(proposedTitle, candidateTitle) : 0.0;
+                String phoneticLevel = phoneticSimilarityService != null ? phoneticSimilarityService.classifyPhoneticLevel(phoneticScore) : "LOW";
+
+                // 3. Semantic Vector Cosine Similarity (Gemini API Integration with safe fallback)
+                Double semanticScore = null;
+                String semanticLevel = "UNAVAILABLE";
+                if (semanticSimilarityService != null) {
+                    try {
+                        OptionalDouble semOpt = semanticSimilarityService.calculateSemanticSimilarity(proposedTitle, candidateTitle);
+                        if (semOpt.isPresent()) {
+                            semanticScore = semOpt.getAsDouble();
+                            semanticLevel = semanticSimilarityService.classifySemanticLevel(semanticScore);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Semantic similarity computation failed for candidate '{}': {}", candidateTitle, e.getMessage());
+                        semanticScore = null;
+                        semanticLevel = "UNAVAILABLE";
+                    }
+                }
+
+                candidateMatches.add(new CandidateMatchDto(
+                        candidateTitle,
+                        candidateNorm,
+                        fuzzyScore,
+                        fuzzyLevel,
+                        phoneticScore,
+                        phoneticLevel,
+                        semanticScore,
+                        semanticLevel
+                ));
             }
-            return maxScore;
-        }).reversed());
 
-        List<String> candidateTitles = candidateMatches.stream()
-                .map(CandidateMatchDto::getCandidateTitle)
-                .distinct()
-                .collect(Collectors.toList());
+            // Rank candidates by highest peak multi-signal score (max of fuzzy, phonetic, or semantic)
+            candidateMatches.sort(Comparator.comparingDouble((CandidateMatchDto c) -> {
+                double maxScore = Math.max(c.getSimilarityScore(), c.getPhoneticSimilarityScore());
+                if (c.getSemanticSimilarityScore() != null) {
+                    maxScore = Math.max(maxScore, c.getSemanticSimilarityScore());
+                }
+                return maxScore;
+            }).reversed());
 
-        Double highestFuzzySimilarity = candidateMatches.isEmpty() ? 0.0 :
-                candidateMatches.stream().mapToDouble(CandidateMatchDto::getSimilarityScore).max().orElse(0.0);
+            List<String> candidateTitles = candidateMatches.stream()
+                    .map(CandidateMatchDto::getCandidateTitle)
+                    .distinct()
+                    .collect(Collectors.toList());
 
-        String topFuzzyMatch = candidateMatches.stream()
-                .max(Comparator.comparingDouble(CandidateMatchDto::getSimilarityScore))
-                .map(CandidateMatchDto::getCandidateTitle).orElse(null);
+            Double highestFuzzySimilarity = candidateMatches.isEmpty() ? 0.0 :
+                    candidateMatches.stream().mapToDouble(CandidateMatchDto::getSimilarityScore).max().orElse(0.0);
 
-        Double highestPhoneticSimilarity = candidateMatches.isEmpty() ? 0.0 :
-                candidateMatches.stream().mapToDouble(CandidateMatchDto::getPhoneticSimilarityScore).max().orElse(0.0);
+            String topFuzzyMatch = candidateMatches.stream()
+                    .max(Comparator.comparingDouble(CandidateMatchDto::getSimilarityScore))
+                    .map(CandidateMatchDto::getCandidateTitle).orElse(null);
 
-        String topPhoneticMatch = candidateMatches.stream()
-                .max(Comparator.comparingDouble(CandidateMatchDto::getPhoneticSimilarityScore))
-                .map(CandidateMatchDto::getCandidateTitle).orElse(null);
+            Double highestPhoneticSimilarity = candidateMatches.isEmpty() ? 0.0 :
+                    candidateMatches.stream().mapToDouble(CandidateMatchDto::getPhoneticSimilarityScore).max().orElse(0.0);
 
-        Double highestSemanticSimilarity = candidateMatches.isEmpty() ? null :
-                candidateMatches.stream()
-                        .filter(c -> c.getSemanticSimilarityScore() != null)
-                        .mapToDouble(CandidateMatchDto::getSemanticSimilarityScore)
-                        .max()
-                        .isPresent() ?
-                        candidateMatches.stream()
-                                .filter(c -> c.getSemanticSimilarityScore() != null)
-                                .mapToDouble(CandidateMatchDto::getSemanticSimilarityScore)
-                                .max().getAsDouble() : null;
+            String topPhoneticMatch = candidateMatches.stream()
+                    .max(Comparator.comparingDouble(CandidateMatchDto::getPhoneticSimilarityScore))
+                    .map(CandidateMatchDto::getCandidateTitle).orElse(null);
 
-        String topSemanticMatch = candidateMatches.stream()
-                .filter(c -> c.getSemanticSimilarityScore() != null)
-                .max(Comparator.comparingDouble(CandidateMatchDto::getSemanticSimilarityScore))
-                .map(CandidateMatchDto::getCandidateTitle).orElse(null);
+            Double highestSemanticSimilarity = candidateMatches.stream()
+                    .map(CandidateMatchDto::getSemanticSimilarityScore)
+                    .filter(Objects::nonNull)
+                    .max(Double::compareTo)
+                    .orElse(null);
 
-        // Stage 4: Deterministic Rule Engine Evaluation
-        RuleEngineInput ruleInput = new RuleEngineInput(
-                proposedTitle,
-                normalizedProposed,
-                publicationType,
-                language,
-                state,
-                district,
-                periodicity,
-                candidateTitles
-        );
-        List<RuleResultDto> ruleResults = ruleEngineService != null ? ruleEngineService.evaluateRules(ruleInput) : List.of();
+            String topSemanticMatch = candidateMatches.stream()
+                    .filter(c -> c.getSemanticSimilarityScore() != null)
+                    .max(Comparator.comparingDouble(CandidateMatchDto::getSemanticSimilarityScore))
+                    .map(CandidateMatchDto::getCandidateTitle).orElse(null);
 
-        // Stage 5: Risk Scoring Engine
-        RiskScoreResultDto riskScoreResult = riskScoringService != null ?
-                riskScoringService.calculateRiskScore(isExactMatch, highestFuzzySimilarity, highestPhoneticSimilarity, highestSemanticSimilarity, ruleResults)
-                : new RiskScoreResultDto(0.0, "LOW RISK", 100.0);
+            // Stage 4: Deterministic Rule Engine Evaluation
+            RuleEngineInput ruleInput = new RuleEngineInput(
+                    proposedTitle,
+                    normalizedProposed,
+                    publicationType,
+                    language,
+                    state,
+                    district,
+                    periodicity,
+                    candidateTitles
+            );
+            List<RuleResultDto> ruleResults = ruleEngineService != null ? ruleEngineService.evaluateRules(ruleInput) : List.of();
 
-        // Stage 6: Decision Engine
-        VerificationDecision decision = decisionEngineService != null ?
-                decisionEngineService.determineDecision(isExactMatch, riskScoreResult, ruleResults)
-                : (isExactMatch ? VerificationDecision.HIGH_RISK : VerificationDecision.ACCEPT);
+            // Stage 5: Risk Scoring Engine
+            RiskScoreResultDto riskScoreResult = riskScoringService != null ?
+                    riskScoringService.calculateRiskScore(isExactMatch, highestFuzzySimilarity, highestPhoneticSimilarity, highestSemanticSimilarity, ruleResults)
+                    : new RiskScoreResultDto(0.0, "LOW RISK", 100.0);
 
-        // Stage 7: Decision Explanation Service
-        String closestCandidate = !candidateTitles.isEmpty() ? candidateTitles.get(0) : (matchedTitle != null ? matchedTitle : null);
-        DecisionExplanationDto explanation = decisionExplanationService != null ?
-                decisionExplanationService.generateExplanation(
-                        proposedTitle, isExactMatch, matchedTitle, closestCandidate,
-                        highestFuzzySimilarity, highestPhoneticSimilarity, highestSemanticSimilarity,
-                        ruleResults, riskScoreResult, decision
-                ) : new DecisionExplanationDto(decision.getCode(), riskScoreResult.getRiskScore(), riskScoreResult.getRiskLevel(), riskScoreResult.getApprovalConfidence(), closestCandidate, List.of(), "");
+            // Stage 6: Decision Engine
+            VerificationDecision decision = decisionEngineService != null ?
+                    decisionEngineService.determineDecision(isExactMatch, riskScoreResult, ruleResults)
+                    : (isExactMatch ? VerificationDecision.HIGH_RISK : VerificationDecision.ACCEPT);
 
-        return new TitleVerificationResultDto(
-                proposedTitle,
-                normalizedProposed,
-                isExactMatch,
-                matchedTitle,
-                candidateTitles,
-                decisionStage,
-                candidateMatches,
-                highestFuzzySimilarity,
-                topFuzzyMatch,
-                highestPhoneticSimilarity,
-                topPhoneticMatch,
-                highestSemanticSimilarity,
-                topSemanticMatch,
-                ruleResults,
-                explanation.getFinalDecision(),
-                explanation.getRiskScore(),
-                explanation.getRiskLevel(),
-                explanation.getApprovalConfidence(),
-                explanation.getClosestMatch(),
-                explanation.getReasons(),
-                explanation.getRecommendation()
-        );
+            // Stage 7: Decision Explanation Service
+            String closestCandidate = !candidateTitles.isEmpty() ? candidateTitles.get(0) : (matchedTitle != null ? matchedTitle : null);
+            DecisionExplanationDto explanation = decisionExplanationService != null ?
+                    decisionExplanationService.generateExplanation(
+                            proposedTitle, isExactMatch, matchedTitle, closestCandidate,
+                            highestFuzzySimilarity, highestPhoneticSimilarity, highestSemanticSimilarity,
+                            ruleResults, riskScoreResult, decision
+                    ) : new DecisionExplanationDto(decision.getCode(), riskScoreResult.getRiskScore(), riskScoreResult.getRiskLevel(), riskScoreResult.getApprovalConfidence(), closestCandidate, List.of(), "");
+
+            return new TitleVerificationResultDto(
+                    proposedTitle,
+                    normalizedProposed,
+                    isExactMatch,
+                    matchedTitle,
+                    candidateTitles,
+                    decisionStage,
+                    candidateMatches,
+                    highestFuzzySimilarity,
+                    topFuzzyMatch,
+                    highestPhoneticSimilarity,
+                    topPhoneticMatch,
+                    highestSemanticSimilarity,
+                    topSemanticMatch,
+                    ruleResults,
+                    explanation.getFinalDecision(),
+                    explanation.getRiskScore(),
+                    explanation.getRiskLevel(),
+                    explanation.getApprovalConfidence(),
+                    explanation.getClosestMatch(),
+                    explanation.getReasons(),
+                    explanation.getRecommendation()
+            );
+        } catch (Exception e) {
+            logger.error("Unexpected error during title verification for '{}': {}", proposedTitle, e.getMessage(), e);
+            String reason = "Automated verification encountered a system error: " + (e.getMessage() != null ? e.getMessage() : "Unknown error") + ". Flagged for manual review.";
+            String rec = "An unexpected processing error occurred during automated pre-screening. Please try verifying again or request manual administrative review.";
+            return new TitleVerificationResultDto(
+                    proposedTitle,
+                    normalizedProposed,
+                    false,
+                    null,
+                    List.of(),
+                    "VERIFICATION_DEGRADED",
+                    List.of(),
+                    0.0,
+                    null,
+                    0.0,
+                    null,
+                    null,
+                    null,
+                    List.of(),
+                    VerificationDecision.REVIEW.getCode(),
+                    50.0,
+                    "MEDIUM RISK",
+                    50.0,
+                    null,
+                    List.of(reason),
+                    rec
+            );
+        }
     }
 
     public TitleNormalizationService getNormalizationService() {

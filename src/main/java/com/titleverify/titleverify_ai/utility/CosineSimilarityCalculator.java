@@ -29,6 +29,10 @@ public class CosineSimilarityCalculator {
 
         double similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 
+        if (Double.isNaN(similarity) || Double.isInfinite(similarity)) {
+            return 0.0;
+        }
+
         // Clamp result to range [0.0, 1.0] for non-negative feature vectors
         return Math.max(0.0, Math.min(1.0, similarity));
     }

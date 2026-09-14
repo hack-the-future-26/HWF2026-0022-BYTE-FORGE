@@ -1,4 +1,3 @@
-git status 
 package com.titleverify.titleverify_ai.utility;
 
 import org.junit.jupiter.api.BeforeEach;

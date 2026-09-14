@@ -293,11 +293,16 @@
                 },
                 body: JSON.stringify(payload)
             })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
-                    return response.json().then(errData => {
-                        throw new Error(errData.message || 'Failed to submit application.');
-                    });
+                    let errMsg = 'Failed to submit application.';
+                    try {
+                        const errData = await response.json();
+                        errMsg = errData.message || errMsg;
+                    } catch (jsonErr) {
+                        errMsg = 'Server error (' + response.status + '): ' + (response.statusText || 'Unable to process request.');
+                    }
+                    throw new Error(errMsg);
                 }
                 return response.json();
             })
